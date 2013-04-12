@@ -10,7 +10,7 @@ available:
 1. Workaround for CMake's inability to list files in directories 
    external to the source directory
 
-        verapp_list_files_in_external_directory (DIRECTORY MATCH RETURN_FILES)
+        verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES
 
 2. Create a new target that copies all files from one directory matching
    some criteria to the destination directory when a target is executed
