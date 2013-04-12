@@ -287,7 +287,7 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
     foreach (_verapp_target_source
              ${_verapp_profile_check_target_sources})
         list (APPEND _verapp_profile_check_target_sources_paths
-              ${CMAKE_CURRENT_SOURCE_DIR}/${_verapp_target_source})
+              ${_verapp_target_source})
     endforeach (_verapp_target_source)
 
     # Convert from a CMake list to a set of files
