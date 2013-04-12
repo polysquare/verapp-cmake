@@ -231,7 +231,7 @@ else (NOT _verapp_executable_found OR
     set (VeraPP_FOUND TRUE)
     set (VERAPP_FOUND TRUE)
     set (VERAPP_EXECUTABLE
-         ${_verapp_executable_path}/${_verapp_executable_name})
+         ${_verapp_executable_path})
     set (VERAPP_RULES
          ${_verapp_rules_path}/${_verapp_rules_subdirectory}/)
     set (__verapp_transform_path ${_verapp_transformations_path})

@@ -17,6 +17,12 @@
 #         Not a regex or globbing expression.
 # RETURN_FILES : The name of a variable to store a list
 #                of fully-qualified files
+
+set (VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE
+     veracpp_exit_failure_on_stderr_wrapper)
+
+add_subdirectory (src)
+
 function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
     find_program (_verapp_ls ls)
 
@@ -139,18 +145,18 @@ function (verapp_copy_files_in_dir_to_subdir_on_target
 
         # Add a new custom command to generate the imported rule within the
         # build directory
-        set (_verapp_out_file ${_verapp_import_output_file})
-        add_custom_command (OUTPUT ${_verapp_import_output_file}
+        set (_verapp_out_file ${_verapp_import_output_file_path})
+        add_custom_command (OUTPUT ${_verapp_import_output_file_path}
                             COMMAND ${_verapp_import_cmake}
                             ARGS -E copy_if_different
                                     ${_verapp_import_input_file_path}
-                                    ${_verapp_import_output_file}
+                                    ${_verapp_import_output_file_path}
                             COMMENT
                             "Importing ${WHAT} ${_verapp_import_output_file}")
 
         # Add the imported file as a source for the input file target
         list (APPEND _verapp_import_target_srcs
-              ${_verapp_import_output_file})
+              ${_verapp_import_output_file_path})
     endforeach (_verapp_import_file)
 
     add_custom_target (${TARGET}
@@ -173,8 +179,8 @@ function (verapp_import_default_rules_into_subdirectory_on_target
           SUBDIRECTORY
           TARGET)
     if (NOT VERAPP_RULES)
-        message (SEND_ERROR "VERAPP_RULES must be set before using "
-                            "this command")
+        message (FATAL_ERROR "VERAPP_RULES must be set before using "
+                             "this command")
     endif (NOT VERAPP_RULES)
 
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_RULES}
@@ -203,11 +209,9 @@ function (verapp_import_default_transformations_into_subdirectory_on_target
           SUBDIRECTORY
           TARGET)
     if (NOT VERAPP_TRANSFORMATIONS)
-        message (SEND_ERROR "VERAPP_TRANSFORMATIONS must be set before using "
-                            "this command")
+        message (FATAL_ERROR "VERAPP_TRANSFORMATIONS must be set before using "
+                             "this command")
     endif (NOT VERAPP_TRANSFORMATIONS)
-
-    message (${VERAPP_TRANSFORMATIONS})
 
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_TRANSFORMATIONS}
                                                   ${SUBDIRECTORY}
@@ -235,8 +239,8 @@ function (verapp_import_default_profiles_into_subdirectory_on_target
           SUBDIRECTORY
           TARGET)
     if (NOT VERAPP_PROFILES)
-        message (SEND_ERROR "VERAPP_PROFILES must be set before using "
-                            "this command")
+        message (FATAL_ERROR "VERAPP_PROFILES must be set before using "
+                             "this command")
     endif (NOT VERAPP_PROFILES)
 
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_PROFILES}
@@ -248,3 +252,78 @@ function (verapp_import_default_profiles_into_subdirectory_on_target
     add_dependencies (${TARGET}
                       verapp_import_default_profiles)
 endfunction (verapp_import_default_profiles_into_subdirectory_on_target)
+
+# verapp_profile_check_source_files_conformance
+#
+# Run vera++ on the source files used to build the target
+# with the specified profile.
+#
+# VERAPP_DIRECTORY : The directory where the vera++ scripts and profiles
+#                    are stored
+# SOURCES_DIRECTORY : The directory where the sources are stored
+# PROFILE : The vera++ profile to run
+# TARGET : The target to scan
+# MODE : Either "WARN_ONLY" or "ERROR", the latter printing
+#        a warning and continuing, the latter forcing an error
+function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
+                                                        SOURCES_DIRECTORY
+                                                        PROFILE
+                                                        TARGET
+                                                        MODE)
+    if (NOT VERAPP_EXECUTABLE)
+        message (FATAL_ERROR "VERAPP_EXECUTABLE must be set before using "
+                             "this command")
+    endif (NOT VERAPP_EXECUTABLE)
+
+    if (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
+        message (FATAL_ERROR "MODE must be WARN_ONLY or ERROR")
+    endif (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
+
+
+
+    get_target_property (_verapp_profile_check_target_sources
+                         ${TARGET}
+                         SOURCES)
+
+    set (_verapp_profile_check_target_sources_paths)
+    foreach (_verapp_target_source
+             ${_verapp_profile_check_target_sources})
+        list (APPEND _verapp_profile_check_target_sources_paths
+              ${CMAKE_CURRENT_SOURCE_DIR}/${_verapp_target_source})
+    endforeach (_verapp_target_source)
+
+    # Convert from a CMake list to a set of files
+    string (REPLACE
+            ";" " "
+            _verapp_profile_check_target_sources_string
+            ${_verapp_profile_check_target_sources})
+
+    # ERROR mode wraps the vera++ invocation in a
+    # wrapper to return a failure exit code when vera++
+    # prints something to the stderr
+    if (MODE STREQUAL "ERROR")
+        set (_verapp_profile_check_command
+             ${VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE}
+             ARGS
+             ${VERAPP_EXECUTABLE})
+    endif (MODE STREQUAL "ERROR")
+
+    # WARN_ONLY mode just runs vera++ and lets it
+    # print to the stderr. It always returns success
+    # so the build will never fail
+    if (MODE STREQUAL "WARN_ONLY")
+        set (_verapp_profile_check_command
+             ${VERAPP_EXECUTABLE}
+             ARGS)
+    endif (MODE STREQUAL "WARN_ONLY")
+
+    add_custom_command (TARGET ${TARGET}
+                        PRE_BUILD
+                        COMMAND
+                        ${_verapp_profile_check_command}
+                        ${_verapp_profile_check_target_sources_paths}
+                        -profile ${PROFILE}
+                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+
+endfunction (verapp_profile_check_source_files_conformance)
+        
