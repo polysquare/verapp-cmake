@@ -1,5 +1,4 @@
 # VeraPPUtilities.cmake
-# Copyright (c) 2013 Sam Spilsbury <smspillaz@gmail.com>
 #
 # Some utility functions to scan projects using vera++
 
@@ -17,6 +16,8 @@
 #         Not a regex or globbing expression.
 # RETURN_FILES : The name of a variable to store a list
 #                of fully-qualified files
+#
+# See LICENCE.md for Copyright info
 
 set (VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE
      veracpp_exit_failure_on_stderr_wrapper)

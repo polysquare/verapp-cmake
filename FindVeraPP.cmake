@@ -1,5 +1,4 @@
 # FindVeraPP.cmake
-# Copyright (c) 2013 Sam Spilsbury <smspillaz@gmail.com>
 #
 # This CMake script will search for vera++ and set the following
 # variables
@@ -16,6 +15,8 @@
 #                       to which vera++ was installed, and not the path
 #                       that contains the vera++ binary. E.g. /opt/ not
 #                       /opt/bin/
+#
+# See LICENCE.md for Copyright info
 
 # Set-up the directory tree of the vera++ installation
 set (_verapp_bin_subdirectory bin)
