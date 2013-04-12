@@ -19,11 +19,6 @@
 #
 # See LICENCE.md for Copyright info
 
-set (VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE
-     veracpp_exit_failure_on_stderr_wrapper)
-
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/src)
-
 function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
     find_program (_verapp_ls ls)
 
