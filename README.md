@@ -10,18 +10,18 @@ available:
 1. Workaround for CMake's inability to list files in directories 
    external to the source directory
 
-       verapp_list_files_in_external_directory (DIRECTORY MATCH RETURN_FILES)
+        verapp_list_files_in_external_directory (DIRECTORY MATCH RETURN_FILES)
 
 2. Create a new target that copies all files from one directory matching
    some criteria to the destination directory when a target is executed
 
-       verapp_copy_files_in_dir_to_subdir_on_target SOURCE DESTINATION
-                                                    MATCH TARGET WHAT
+        verapp_copy_files_in_dir_to_subdir_on_target SOURCE DESTINATION
+                                                     MATCH TARGET WHAT
 
 3. Import vera++ rules into a new subdirectory before a target is executed
 
-       verapp_import_default_rules_into_subdirectory_on_target SUBDIRECTORY
-                                                               TARGET
+        verapp_import_default_rules_into_subdirectory_on_target SUBDIRECTORY
+                                                                TARGET
 
 4. Import vera++ transformations into a new subdirectory before a target is
    executed
