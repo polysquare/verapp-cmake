@@ -321,6 +321,7 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                         ${_verapp_profile_check_command}
                         ${_verapp_profile_check_target_sources_paths}
                         -profile ${PROFILE}
+                        -showrules
                         WORKING_DIRECTORY ${VERAPP_DIRECTORY})
 
 endfunction (verapp_profile_check_source_files_conformance)
