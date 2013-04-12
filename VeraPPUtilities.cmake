@@ -21,12 +21,14 @@
 
 function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
     find_program (_verapp_ls ls)
+    mark_as_advanced (_verapp_ls)
 
     if (${_verapp_ls} STREQUAL "_verapp_ls-NOTFOUND")
         message (FATAL_ERROR "A Unix userland containing 'ls' was not found")
     endif (${_verapp_ls} STREQUAL "_verapp_ls-NOTFOUND")
 
     find_program (_verapp_grep grep)
+    mark_as_advanced (_verapp_grep)
 
     if (${_verapp_ls} STREQUAL "_verapp_grep-NOTFOUND")
         message (FATAL_ERROR "A Unix userland containing 'grep' was not found")
