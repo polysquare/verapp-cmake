@@ -33,3 +33,11 @@ available:
 
         verapp_import_default_profiles_into_subdirectory_on_target SUBDIRECTORY
                                                                    TARGET
+
+6. Run vera++ on the source files build by a target
+
+        verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
+                                                      SOURCES_DIRECTORY
+                                                      PROFILE
+                                                      TARGET
+                                                      MODE
