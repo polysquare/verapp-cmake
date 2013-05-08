@@ -8,7 +8,7 @@
 
 find_package (Boost 1.49 REQUIRED COMPONENTS iostreams)
 
-set (CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror" ${CMAKE_CXX_FLAGS})
+set (CMAKE_CXX_FLAGS "-std=c++0x -Wall -Werror" ${CMAKE_CXX_FLAGS})
 
 set (VERACPP_EXIT_FAILURE_ON_STDERR_WRAPPER_SRCS
      ${CMAKE_CURRENT_SOURCE_DIR}/exit_failure_on_stderr_wrapper.cpp)
