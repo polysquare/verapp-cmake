@@ -6,6 +6,8 @@
 #
 # See LICENCE.md for Copyright information
 
+include (VeraPPUtilities)
+
 find_package (Boost 1.49 REQUIRED COMPONENTS iostreams)
 
 set (CMAKE_CXX_FLAGS "-std=c++0x -Wall -Werror" ${CMAKE_CXX_FLAGS})
