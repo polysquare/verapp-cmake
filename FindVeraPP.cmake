@@ -36,6 +36,47 @@ set (_verapp_executable_name vera++)
 
 set (_verapp_executable_found FALSE)
 
+function (_check_verapp_version)
+
+    execute_process (COMMAND ${_verapp_executable_path} -version
+                     OUTPUT_VARIABLE _verapp_version_number)
+
+    string (STRIP ${_verapp_version_number} _verapp_version_number)
+
+    string (COMPARE GREATER
+            ${_verapp_version_number}
+            "${VeraPP_FIND_VERSION}"
+            _version_greater)
+
+    string (COMPARE EQUAL
+            ${_verapp_version_number}
+            "${VeraPP_FIND_VERSION}"
+            _version_equal)
+
+    if (NOT VeraPP_FIND_QUIETLY)
+        message (STATUS "Installed vera++ version: " ${_verapp_version_number})
+    endif (NOT VeraPP_FIND_QUIETLY)
+
+    if (VeraPP_FIND_VERSION_EXACT AND NOT _version_equal)
+        if (NOT VeraPP_FIND_QUIETLY)
+            message (STATUS "Requested exact version: " ${VeraPP_FIND_VERSION}
+                     " but vera++ version is not equal")
+        endif (NOT VeraPP_FIND_QUIETLY)
+        set (_verapp_appropriate_version_found FALSE PARENT_SCOPE)
+    elseif (VeraPP_FIND_VERSION AND NOT
+            (_version_greater OR
+             _version_equal))
+        if (NOT VeraPP_FIND_QUIETLY)
+            message (STATUS "Requested version at least version: "
+                     ${VeraPP_FIND_VERSION} " but vera++ version is lower")
+        endif (NOT VeraPP_FIND_QUIETLY)
+        set (_verapp_appropriate_version_found FALSE PARENT_SCOPE)
+    else (VeraPP_FIND_VERSION_EXACT_AND NOT _version_equal)
+        set (_verapp_appropriate_version_found TRUE PARENT_SCOPE)
+    endif (VeraPP_FIND_VERSION_EXACT AND NOT _version_equal)
+
+endfunction (_check_verapp_version)
+
 macro (_check_if_verapp_executable_was_found)
 
     # We do not want this in the user-visible CMake cache
@@ -44,6 +85,10 @@ macro (_check_if_verapp_executable_was_found)
     if (NOT ${_verapp_executable_path} STREQUAL
             "_verapp_executable_path-NOTFOUND")
         set (_verapp_executable_found TRUE PARENT_SCOPE)
+        _check_verapp_version ()
+        if (_verapp_appropriate_version_found)
+            set (_verapp_correct_version_found TRUE PARENT_SCOPE)
+        endif (_verapp_appropriate_version_found)
     endif (NOT ${_verapp_executable_path} STREQUAL
             "_verapp_executable_path-NOTFOUND")
 endmacro (_check_if_verapp_executable_was_found)
@@ -199,15 +244,16 @@ if (_verapp_executable_found)
 
 else (_verapp_executable_found)
     if (NOT VeraPP_FIND_QUIETLY)
-        message (STATUS "The 'vera++' executable was not found in any search "
+        message (STATUS "The 'vera++' executable was not found in any search"
                         " or system paths.\n"
                         ".. Please adjust VERAPP_SEARCH_PATHS"
                         " to the installation prefix of the 'vera++'\n"
                         ".. executable or install Vera++")
     endif (NOT VeraPP_FIND_QUIETLY)
-endif (_verapp_executable_found) 
+endif (_verapp_executable_found)
 
 if (NOT _verapp_executable_found OR
+    NOT _verapp_correct_version_found OR
     NOT _verapp_rules_path_found OR
     NOT _verapp_profiles_path_found OR
     NOT _verapp_transformations_path_found)
@@ -226,6 +272,7 @@ if (NOT _verapp_executable_found OR
            VeraPP_FIND_REQUIRED)
 
 else (NOT _verapp_executable_found OR
+      NOT _verapp_correct_version_found OR
       NOT _verapp_rules_path_found OR
       NOT _verapp_profiles_path_found OR
       NOT _verapp_transformations_path_found)
@@ -247,6 +294,7 @@ else (NOT _verapp_executable_found OR
     endif (NOT VeraPP_FIND_QUIETLY)
 
 endif (NOT _verapp_executable_found OR
+       NOT _verapp_correct_version_found OR
        NOT _verapp_rules_path_found OR
        NOT _verapp_profiles_path_found OR
        NOT _verapp_transformations_path_found)
