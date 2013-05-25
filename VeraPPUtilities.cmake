@@ -19,9 +19,6 @@
 #
 # See LICENCE.md for Copyright info
 
-set (VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE
-     veracpp_exit_failure_on_stderr_wrapper)
-
 function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
     find_program (_verapp_ls ls)
     mark_as_advanced (_verapp_ls)
@@ -299,32 +296,28 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
             _verapp_profile_check_target_sources_string
             ${_verapp_profile_check_target_sources})
 
-    # ERROR mode wraps the vera++ invocation in a
-    # wrapper to return a failure exit code when vera++
-    # prints something to the stderr
+    # ERROR passes --error to vera++ so that it
+    # returns a nonzero exit code on failure
     if (MODE STREQUAL "ERROR")
-        set (_verapp_profile_check_command
-             ${VERAPP_EXIT_FAILURE_ON_STDERR_WRAPPER_EXECUTABLE}
-             ARGS
-             ${VERAPP_EXECUTABLE})
-    endif (MODE STREQUAL "ERROR")
-
+        set (_verapp_failure_mode
+             --error)
     # WARN_ONLY mode just runs vera++ and lets it
     # print to the stderr. It always returns success
     # so the build will never fail
-    if (MODE STREQUAL "WARN_ONLY")
-        set (_verapp_profile_check_command
-             ${VERAPP_EXECUTABLE}
-             ARGS)
-    endif (MODE STREQUAL "WARN_ONLY")
+    elseif (MODE STREQUAL "WARN_ONLY")
+        set (_verapp_failure_mode
+             --warning)
+    endif (MODE STREQUAL "ERROR")
 
     add_custom_command (TARGET ${TARGET}
                         PRE_BUILD
                         COMMAND
-                        ${_verapp_profile_check_command}
+                        ${VERAPP_EXECUTABLE}
+                        ARGS
                         ${_verapp_profile_check_target_sources_paths}
-                        -profile ${PROFILE}
-                        -showrules
+                        --profile ${PROFILE}
+                        --show-rule
+                        ${_verapp_failure_mode}
                         WORKING_DIRECTORY ${VERAPP_DIRECTORY})
 
 endfunction (verapp_profile_check_source_files_conformance)
