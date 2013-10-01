@@ -251,6 +251,81 @@ function (verapp_import_default_profiles_into_subdirectory_on_target
                       verapp_import_default_profiles)
 endfunction (verapp_import_default_profiles_into_subdirectory_on_target)
 
+function (_verapp_check_sources_conformance_invariants MODE)
+
+    if (NOT VERAPP_EXECUTABLE)
+        message (FATAL_ERROR "VERAPP_EXECUTABLE must be set before using "
+                             "this command")
+    endif (NOT VERAPP_EXECUTABLE)
+
+    if (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
+        message (FATAL_ERROR "MODE must be WARN_ONLY or ERROR, was ${MODE}")
+    endif (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
+
+endfunction (_verapp_check_sources_conformance_invariants)
+
+function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
+                                                               SOURCES_VAR
+                                                               PROFILE
+                                                               TARGET)
+
+    # ERROR passes --error to vera++ so that it
+    # returns a nonzero exit code on failure
+    if (MODE STREQUAL "ERROR")
+        set (_verapp_failure_mode
+             --error)
+    # WARN_ONLY mode just runs vera++ and lets it
+    # print to the stderr. It always returns success
+    # so the build will never fail
+    elseif (MODE STREQUAL "WARN_ONLY")
+        set (_verapp_failure_mode
+             --warning)
+    endif (MODE STREQUAL "ERROR")
+
+    # Double dereference SOURCES_VAR as SOURCES_VAR
+    # just refers to the list name and not the list itself
+    foreach (_source ${${SOURCES_VAR}})
+        add_custom_command (TARGET ${TARGET}
+                            PRE_BUILD
+                            COMMAND
+                            ${VERAPP_EXECUTABLE}
+                            ARGS
+                            ${_source}
+                            --profile ${PROFILE}
+                            --show-rule
+                            ${_verapp_failure_mode}
+                            WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+    endforeach ()
+
+endfunction (_verapp_profile_check_sources_conformance_for_target)
+
+# verapp_profile_check_source_files_list_conformance_for_target
+# Run vera++ on the source files provided after building the target
+# specified
+#
+# VERAPP_DIRECTORY : The directory where the vera++ scripts and profiles
+#                    are stored
+# SOURCES : The sources to check for conformance
+# PROFILE : The vera++ profile to run
+# TARGET : The target to attach to
+# MODE : Either "WARN_ONLY" or "ERROR", the former printing a
+#        warning and continuing or the latter forcing an error
+function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECTORY
+                                                                   SOURCES_LIST_VAR
+                                                                   PROFILE
+                                                                   TARGET
+                                                                   MODE)
+
+    _verapp_check_sources_conformance_invariants (${MODE})
+
+    _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
+                                                          ${SOURCES_LIST_VAR}
+                                                          ${PROFILE}
+                                                          ${TARGET}
+                                                          ${MODE})
+
+endfunction (verapp_profile_check_source_files_conformance_for_target)
+
 # verapp_profile_check_source_files_conformance
 #
 # Run vera++ on the source files used to build the target
@@ -268,57 +343,25 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                                                         PROFILE
                                                         TARGET
                                                         MODE)
-    if (NOT VERAPP_EXECUTABLE)
-        message (FATAL_ERROR "VERAPP_EXECUTABLE must be set before using "
-                             "this command")
-    endif (NOT VERAPP_EXECUTABLE)
 
-    if (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
-        message (FATAL_ERROR "MODE must be WARN_ONLY or ERROR")
-    endif (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
-
-
+    _verapp_check_sources_conformance_invariants (${MODE})
 
     get_target_property (_verapp_profile_check_target_sources
                          ${TARGET}
                          SOURCES)
 
-    set (_verapp_profile_check_target_sources_paths)
+    set (_sources)
     foreach (_verapp_target_source
              ${_verapp_profile_check_target_sources})
-        list (APPEND _verapp_profile_check_target_sources_paths
+        list (APPEND _sources
               ${_verapp_target_source})
     endforeach (_verapp_target_source)
 
-    # Convert from a CMake list to a set of files
-    string (REPLACE
-            ";" " "
-            _verapp_profile_check_target_sources_string
-            ${_verapp_profile_check_target_sources})
-
-    # ERROR passes --error to vera++ so that it
-    # returns a nonzero exit code on failure
-    if (MODE STREQUAL "ERROR")
-        set (_verapp_failure_mode
-             --error)
-    # WARN_ONLY mode just runs vera++ and lets it
-    # print to the stderr. It always returns success
-    # so the build will never fail
-    elseif (MODE STREQUAL "WARN_ONLY")
-        set (_verapp_failure_mode
-             --warning)
-    endif (MODE STREQUAL "ERROR")
-
-    add_custom_command (TARGET ${TARGET}
-                        PRE_BUILD
-                        COMMAND
-                        ${VERAPP_EXECUTABLE}
-                        ARGS
-                        ${_verapp_profile_check_target_sources_paths}
-                        --profile ${PROFILE}
-                        --show-rule
-                        ${_verapp_failure_mode}
-                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+    _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
+                                                          _sources
+                                                          ${PROFILE}
+                                                          ${TARGET}
+                                                          ${MODE})
 
 endfunction (verapp_profile_check_source_files_conformance)
         
