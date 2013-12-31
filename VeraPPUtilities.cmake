@@ -273,7 +273,8 @@ endfunction (_verapp_check_sources_conformance_invariants)
 function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                                                                SOURCES_VAR
                                                                PROFILE
-                                                               TARGET)
+                                                               TARGET
+                                                               IMPORT_TARGET)
 
     # ERROR passes --error to vera++ so that it
     # returns a nonzero exit code on failure
@@ -303,6 +304,8 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                             WORKING_DIRECTORY ${VERAPP_DIRECTORY})
     endforeach ()
 
+    add_dependencies (${TARGET} ${IMPORT_TARGET})
+
 endfunction (_verapp_profile_check_sources_conformance_for_target)
 
 # verapp_profile_check_source_files_list_conformance_for_target
@@ -320,6 +323,7 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
                                                                    SOURCES_LIST_VAR
                                                                    PROFILE
                                                                    TARGET
+                                                                   IMPORT_TARGET
                                                                    MODE)
 
     _verapp_check_sources_conformance_invariants (${MODE})
@@ -328,6 +332,7 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
                                                           ${SOURCES_LIST_VAR}
                                                           ${PROFILE}
                                                           ${TARGET}
+                                                          ${IMPORT_TARGET}
                                                           ${MODE})
 
 endfunction (verapp_profile_check_source_files_conformance_for_target)
@@ -348,6 +353,7 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                                                         SOURCES_DIRECTORY
                                                         PROFILE
                                                         TARGET
+                                                        IMPORT_TARGET
                                                         MODE)
 
     _verapp_check_sources_conformance_invariants (${MODE})
@@ -367,6 +373,7 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                                                           _sources
                                                           ${PROFILE}
                                                           ${TARGET}
+                                                          ${IMPORT_TARGET}
                                                           ${MODE})
 
 endfunction (verapp_profile_check_source_files_conformance)
