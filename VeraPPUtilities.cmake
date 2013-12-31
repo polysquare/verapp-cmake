@@ -181,14 +181,16 @@ function (verapp_import_default_rules_into_subdirectory_on_target
                              "this command")
     endif (NOT VERAPP_RULES)
 
+    set (_new_target ${TARGET}_verapp_import_default_rules)
+
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_RULES}
                                                   ${SUBDIRECTORY}
                                                   .tcl
-                                                  verapp_import_default_rules
+                                                  ${_new_target}
                                                   "Vera++ rule")
 
     add_dependencies (${TARGET}
-                      verapp_import_default_rules)
+                      ${_new_target})
 endfunction (verapp_import_default_rules_into_subdirectory_on_target)
 
 # verapp_import_default_transformations_into_subdirectory_on_target
@@ -211,14 +213,16 @@ function (verapp_import_default_transformations_into_subdirectory_on_target
                              "this command")
     endif (NOT VERAPP_TRANSFORMATIONS)
 
+    set (_new_target ${TARGET}_verapp_import_transformations)
+
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_TRANSFORMATIONS}
                                                   ${SUBDIRECTORY}
                                                   .tcl
-                                                  verapp_import_transformations
+                                                  ${_new_target}
                                                   "Vera++ transformation")
 
     add_dependencies (${TARGET}
-                      verapp_import_transformations)
+                      ${_new_target})
 endfunction (verapp_import_default_transformations_into_subdirectory_on_target)
 
 # verapp_import_default_profiles_into_subdirectory_on_target
@@ -241,14 +245,16 @@ function (verapp_import_default_profiles_into_subdirectory_on_target
                              "this command")
     endif (NOT VERAPP_PROFILES)
 
+    set (_new_target ${TARGET}_verapp_import_default_profiles)
+
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_PROFILES}
                                                   ${SUBDIRECTORY}
                                                   NO_MATCH
-                                                  verapp_import_default_profiles
+                                                  ${_new_target}
                                                   "Vera++ profile")
 
     add_dependencies (${TARGET}
-                      verapp_import_default_profiles)
+                      ${_new_target})
 endfunction (verapp_import_default_profiles_into_subdirectory_on_target)
 
 function (_verapp_check_sources_conformance_invariants MODE)
