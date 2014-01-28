@@ -87,7 +87,7 @@ function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
         # Set RETURN_FILES in PARENT_SCOPE
         set (${RETURN_FILES} ${_verapp_ls_return_list} PARENT_SCOPE)
     else (${_verapp_ls_result} EQUAL 0)
-        message (FATAL_ERROR "ls: " ${_verapp_ls_error})
+        message (FATAL_ERROR "ls ${DIRECTORY}:" ${_verapp_ls_error})
     endif (${_verapp_ls_result} EQUAL 0)
 endfunction (verapp_list_files_in_external_directory)
 
