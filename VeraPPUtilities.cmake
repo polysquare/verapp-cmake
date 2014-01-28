@@ -293,7 +293,7 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
     # just refers to the list name and not the list itself
     foreach (_source ${${SOURCES_VAR}})
         add_custom_command (TARGET ${TARGET}
-                            POST_BUILD
+                            PRE_LINK
                             COMMAND
                             ${VERAPP_EXECUTABLE}
                             ARGS
