@@ -290,19 +290,39 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
              --warning)
     endif (MODE STREQUAL "ERROR")
 
+    get_property (TARGET_LOCATION_SET
+                  TARGET ${TARGET}
+                  PROPERTY LOCATION
+                  SET)
+
+    set (WHEN PRE_BUILD)
+
+    if (TARGET_LOCATION_SET)
+
+        set (WHEN PRE_LINK)
+
+    endif (TARGET_LOCATION_SET)
+
     # Double dereference SOURCES_VAR as SOURCES_VAR
     # just refers to the list name and not the list itself
     foreach (_source ${${SOURCES_VAR}})
-        add_custom_command (TARGET ${TARGET}
-                            PRE_LINK
-                            COMMAND
-                            ${VERAPP_EXECUTABLE}
-                            ARGS
-                            ${_source}
-                            --profile ${PROFILE}
-                            --show-rule
-                            ${_verapp_failure_mode}
-                            WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+        # Check if the source file exists - we may be scanning
+        # a custom target which has a dummy source file attached.
+        if (EXISTS ${_source})
+
+            add_custom_command (TARGET ${TARGET}
+                                ${WHEN}
+                                COMMAND
+                                ${VERAPP_EXECUTABLE}
+                                ARGS
+                                ${_source}
+                                --profile ${PROFILE}
+                                --show-rule
+                                ${_verapp_failure_mode}
+                                WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+
+        endif (EXISTS ${_source})
+
     endforeach ()
 
     add_dependencies (${TARGET} ${IMPORT_TARGET})
