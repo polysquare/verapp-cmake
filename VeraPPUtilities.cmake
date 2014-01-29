@@ -149,6 +149,7 @@ function (verapp_copy_files_in_dir_to_subdir_on_target
                             ARGS -E copy_if_different
                                     ${_verapp_import_input_file_path}
                                     ${_verapp_import_output_file_path}
+                            DEPENDS ${_verapp_import_input_file_path}
                             COMMENT
                             "Importing ${WHAT} ${_verapp_import_output_file}")
 
