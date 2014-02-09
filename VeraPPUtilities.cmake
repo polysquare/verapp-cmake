@@ -290,18 +290,17 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
              --warning)
     endif (MODE STREQUAL "ERROR")
 
-    get_property (TARGET_LOCATION_SET
+    get_property (TARGET_TYPE
                   TARGET ${TARGET}
-                  PROPERTY LOCATION
-                  SET)
+                  PROPERTY TYPE)
 
-    set (WHEN PRE_BUILD)
+    set (WHEN PRE_LINK)
 
-    if (TARGET_LOCATION_SET)
+    if (TARGET_TYPE STREQUAL "UTILITY")
 
-        set (WHEN PRE_LINK)
+        set (WHEN PRE_BUILD)
 
-    endif (TARGET_LOCATION_SET)
+    endif (TARGET_TYPE STREQUAL "UTILITY")
 
     # Double dereference SOURCES_VAR as SOURCES_VAR
     # just refers to the list name and not the list itself
