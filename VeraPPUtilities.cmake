@@ -214,7 +214,7 @@ function (verapp_import_default_transformations_into_subdirectory_on_target
                              "this command")
     endif (NOT VERAPP_TRANSFORMATIONS)
 
-    set (_new_target ${TARGET}_verapp_import_transformations)
+    set (_new_target ${TARGET}_verapp_import_default_transformations)
 
     verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_TRANSFORMATIONS}
                                                   ${SUBDIRECTORY}
@@ -228,16 +228,15 @@ endfunction (verapp_import_default_transformations_into_subdirectory_on_target)
 
 # verapp_import_default_profiles_into_subdirectory_on_target
 #
-# Import the default Vera++ transformations into a subdirectory
+# Import the default Vera++ profiles into a subdirectory
 # specified in DIRECTORY. Useful if you wish to rely
-# on some of the default transformations and then also mix
-# with your own.
+# one one of the default profiles.
 #
-# You should consider importing the transformations into the
+# You should consider importing the profiles into the
 # projects binary directory or a subdirectory thereof
 #
-# SUBDIRECTORY : The subdirectory to import the transformations into
-# TARGET : The target to run the importation before
+# SUBDIRECTORY : The subdirectory to import the profiles into
+# TARGET : The target to run the profiles before
 function (verapp_import_default_profiles_into_subdirectory_on_target
           SUBDIRECTORY
           TARGET)
@@ -364,13 +363,11 @@ endfunction (verapp_profile_check_source_files_conformance_for_target)
 #
 # VERAPP_DIRECTORY : The directory where the vera++ scripts and profiles
 #                    are stored
-# SOURCES_DIRECTORY : The directory where the sources are stored
 # PROFILE : The vera++ profile to run
 # TARGET : The target to scan
 # MODE : Either "WARN_ONLY" or "ERROR", the latter printing
 #        a warning and continuing, the latter forcing an error
 function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
-                                                        SOURCES_DIRECTORY
                                                         PROFILE
                                                         TARGET
                                                         IMPORT_TARGET
