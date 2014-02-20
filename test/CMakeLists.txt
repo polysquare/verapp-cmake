@@ -45,6 +45,10 @@ add_cmake_build_test (CheckConformanceForLibraryTarget
                       CheckConformanceForLibraryTargetVerify)
 add_cmake_build_test (CheckConformanceForTarget
                       CheckConformanceForTargetVerify)
+add_cmake_build_test (CheckConformanceForTargetGenerated
+                      CheckConformanceForTargetGeneratedVerify)
+add_cmake_build_test (CheckConformanceForTargetNoGenerated
+                      CheckConformanceForTargetNoGeneratedVerify)
 add_cmake_build_test (CheckConformanceForSources
                       CheckConformanceForSourcesVerify)
 add_cmake_build_test (CheckConformanceForSourcesErrorMode
