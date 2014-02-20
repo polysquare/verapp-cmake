@@ -19,6 +19,8 @@
 #
 # See LICENCE.md for Copyright info
 
+include (CMakeParseArguments)
+
 function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
     find_program (_verapp_ls ls)
     mark_as_advanced (_verapp_ls)
@@ -270,6 +272,43 @@ function (_verapp_check_sources_conformance_invariants MODE)
 
 endfunction (_verapp_check_sources_conformance_invariants)
 
+function (_filter_sources_list RESULT_SOURCES_VARIABLE)
+
+    set (FILTER_SOURCES_LIST_MULTIVAR_OPTIONS SOURCES)
+    set (FILTER_SOURCES_LIST_OPTIONS ALLOW_GENERATED)
+
+    cmake_parse_arguments (FILTER_SOURCES_LIST
+                           "${FILTER_SOURCES_LIST_OPTIONS}"
+                           ""
+                           "${FILTER_SOURCES_LIST_MULTIVAR_OPTIONS}"
+                           ${ARGN})
+
+    set (FILTERED_SOURCES)
+
+    foreach (SOURCE ${FILTER_SOURCES_LIST_SOURCES})
+        get_property (SOURCE_IS_GENERATED
+                      SOURCE ${SOURCE}
+                      PROPERTY GENERATED)
+
+        if (SOURCE_IS_GENERATED)
+            # If we're allowing GENERATED sources then immediately
+            # add them to the filtered sources list, otherwise skip them.
+            if (FILTER_SOURCES_LIST_ALLOW_GENERATED)
+                list (APPEND FILTERED_SOURCES ${SOURCE})
+                break ()
+            else (FILTER_SOURCES_LIST_ALLOW_GENERATED)
+                break ()
+            endif (FILTER_SOURCES_LIST_ALLOW_GENERATED)
+
+        else (SOURCE_IS_GENERATED)
+            list (APPEND FILTERED_SOURCES ${SOURCE})
+        endif (SOURCE_IS_GENERATED)
+    endforeach ()
+
+    set (${RESULT_SOURCES_VARIABLE} ${FILTERED_SOURCES} PARENT_SCOPE)
+
+endfunction ()
+
 function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                                                                SOURCES_VAR
                                                                PROFILE
@@ -301,25 +340,37 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
 
     endif (TARGET_TYPE STREQUAL "UTILITY")
 
+    set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED)
+
+    cmake_parse_arguments (CHECK_CONFORMANCE
+                           "${CHECK_CONFORMANCE_OPTIONS}"
+                           ""
+                           ""
+                           ${ARGN})
+
+    set (CHECK_GENERATED_OPTION)
+    if (CHECK_CONFORMANCE_CHECK_GENERATED)
+        set (CHECK_GENERATED_OPTION ALLOW_GENERATED)
+    endif (CHECK_CONFORMANCE_CHECK_GENERATED)
+
     # Double dereference SOURCES_VAR as SOURCES_VAR
     # just refers to the list name and not the list itself
-    foreach (_source ${${SOURCES_VAR}})
-        # Check if the source file exists - we may be scanning
-        # a custom target which has a dummy source file attached.
-        if (EXISTS ${_source})
+    _filter_sources_list (FILTERED_SOURCES
+                          SOURCES ${${SOURCES_VAR}}
+                          ${CHECK_GENERATED_OPTION})
 
-            add_custom_command (TARGET ${TARGET}
-                                ${WHEN}
-                                COMMAND
-                                ${VERAPP_EXECUTABLE}
-                                ARGS
-                                ${_source}
-                                --profile ${PROFILE}
-                                --show-rule
-                                ${_verapp_failure_mode}
-                                WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+    foreach (_source ${FILTERED_SOURCES})
 
-        endif (EXISTS ${_source})
+        add_custom_command (TARGET ${TARGET}
+                            ${WHEN}
+                            COMMAND
+                            ${VERAPP_EXECUTABLE}
+                            ARGS
+                            ${_source}
+                            --profile ${PROFILE}
+                            --show-rule
+                            ${_verapp_failure_mode}
+                            WORKING_DIRECTORY ${VERAPP_DIRECTORY})
 
     endforeach ()
 
@@ -338,6 +389,8 @@ endfunction (_verapp_profile_check_sources_conformance_for_target)
 # TARGET : The target to attach to
 # MODE : Either "WARN_ONLY" or "ERROR", the former printing a
 #        warning and continuing or the latter forcing an error
+# [Optional] CHECK_GENERATED : Whether or not to check generated
+#                              source files too.
 function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECTORY
                                                                    SOURCES_LIST_VAR
                                                                    PROFILE
@@ -352,7 +405,8 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
                                                           ${PROFILE}
                                                           ${TARGET}
                                                           ${IMPORT_TARGET}
-                                                          ${MODE})
+                                                          ${MODE}
+                                                          ${ARGN})
 
 endfunction (verapp_profile_check_source_files_conformance_for_target)
 
@@ -367,6 +421,8 @@ endfunction (verapp_profile_check_source_files_conformance_for_target)
 # TARGET : The target to scan
 # MODE : Either "WARN_ONLY" or "ERROR", the latter printing
 #        a warning and continuing, the latter forcing an error
+# [Optional] CHECK_GENERATED : Whether or not to check generated
+#                              source files too.
 function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                                                         PROFILE
                                                         TARGET
@@ -386,12 +442,25 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
               ${_verapp_target_source})
     endforeach (_verapp_target_source)
 
+    get_target_property (_verapp_profile_check_target_type
+                         ${TARGET}
+                         TYPE)
+
+    # UTILITY targets are created by add_custom_target. They have
+    # one source, which is the stamp file created by the target
+    # which it outputs later. Remove that stamp file, as there may
+    # be other sources which we are about.
+    if (_verapp_profile_check_target_type STREQUAL "UTILITY")
+        list (REMOVE_AT _sources 0)
+    endif (_verapp_profile_check_target_type STREQUAL "UTILITY")
+
     _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
                                                           _sources
                                                           ${PROFILE}
                                                           ${TARGET}
                                                           ${IMPORT_TARGET}
-                                                          ${MODE})
+                                                          ${MODE}
+                                                          ${ARGN})
 
 endfunction (verapp_profile_check_source_files_conformance)
         
