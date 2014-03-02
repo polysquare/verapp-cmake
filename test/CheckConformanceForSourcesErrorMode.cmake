@@ -21,8 +21,6 @@ set (SOURCE_FILE_CONTENTS
 set (SOURCE_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp)
 file (WRITE ${SOURCE_FILE_NAME} ${SOURCE_FILE_CONTENTS})
 
-add_custom_target (other_target ALL)
-
 set (RULES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/rules)
 set (PROFILES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/profiles)
 add_custom_target (on_all ALL)

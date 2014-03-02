@@ -309,24 +309,89 @@ function (_filter_sources_list RESULT_SOURCES_VARIABLE)
 
 endfunction ()
 
-function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
-                                                               SOURCES_VAR
-                                                               PROFILE
-                                                               TARGET
-                                                               IMPORT_TARGET)
+# Returns a list of command lines to run, each command being separated by
+# the COMMAND operator, so that the entire list can be passed directly
+# to add_custom_command or add_custom_target
+function (_verapp_get_commandline_list COMMANDLINES_RETURN)
+
+    set (GET_COMMANDLINE_OPTIONS
+         CHECK_GENERATED)
+    set (GET_COMMANDLINE_SINGLEVAR_ARGS
+         MODE
+         PROFILE)
+    set (GET_COMMANDLINE_MULTIVAR_ARGS
+         SOURCES)
+
+    cmake_parse_arguments (GET_COMMANDLINE
+                           "${GET_COMMANDLINE_OPTIONS}"
+                           "${GET_COMMANDLINE_SINGLEVAR_ARGS}"
+                           "${GET_COMMANDLINE_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    if (NOT GET_COMMANDLINE_MODE)
+        message (FATAL_ERROR "MODE must be set in the options for "
+                             "_verapp_get_commandline_list")
+    endif (NOT GET_COMMANDLINE_MODE)
+
+    if (NOT GET_COMMANDLINE_PROFILE)
+        message (FATAL_ERROR "PROFILE must be set in the options for "
+                             "_verapp_get_commandline_list")
+    endif (NOT GET_COMMANDLINE_PROFILE)
+
+    if (NOT GET_COMMANDLINE_SOURCES)
+        message (FATAL_ERROR "SOURCES must be set in the options for "
+                             "_verapp_get_commandline_list")
+    endif (NOT GET_COMMANDLINE_SOURCES)
 
     # ERROR passes --error to vera++ so that it
     # returns a nonzero exit code on failure
-    if (MODE STREQUAL "ERROR")
+    if (GET_COMMANDLINE_MODE STREQUAL "ERROR")
         set (_verapp_failure_mode
              --error)
     # WARN_ONLY mode just runs vera++ and lets it
     # print to the stderr. It always returns success
     # so the build will never fail
-    elseif (MODE STREQUAL "WARN_ONLY")
+    elseif (GET_COMMANDLINE_MODE STREQUAL "WARN_ONLY")
         set (_verapp_failure_mode
              --warning)
-    endif (MODE STREQUAL "ERROR")
+    endif (GET_COMMANDLINE_MODE STREQUAL "ERROR")
+
+    set (CHECK_GENERATED_OPTION)
+    if (GET_COMMANDLINE_CHECK_GENERATED)
+        set (CHECK_GENERATED_OPTION ALLOW_GENERATED)
+    endif (GET_COMMANDLINE_CHECK_GENERATED)
+
+    # Double dereference SOURCES_VAR as SOURCES_VAR
+    # just refers to the list name and not the list itself
+    _filter_sources_list (FILTERED_SOURCES
+                          SOURCES ${GET_COMMANDLINE_SOURCES}
+                          ${CHECK_GENERATED_OPTION})
+
+    set (COMMAND_LIST)
+
+    foreach (SOURCE ${FILTERED_SOURCES})
+
+        list (APPEND COMMAND_LIST
+              COMMAND
+              ${VERAPP_EXECUTABLE}
+              ${SOURCE}
+              --profile
+              ${GET_COMMANDLINE_PROFILE}
+              --show-rule
+              ${_verapp_failure_mode})
+
+    endforeach ()
+
+    set (${COMMANDLINES_RETURN} ${COMMAND_LIST} PARENT_SCOPE)
+
+endfunction (_verapp_get_commandline_list)
+
+function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
+                                                               SOURCES_VAR
+                                                               PROFILE
+                                                               TARGET
+                                                               IMPORT_TARGET
+                                                               MODE)
 
     get_property (TARGET_TYPE
                   TARGET ${TARGET}
@@ -347,34 +412,22 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                            ""
                            ""
                            ${ARGN})
-
     set (CHECK_GENERATED_OPTION)
     if (CHECK_CONFORMANCE_CHECK_GENERATED)
-        set (CHECK_GENERATED_OPTION ALLOW_GENERATED)
+        set (CHECK_GENERATED_OPTION CHECK_GENERATED)
     endif (CHECK_CONFORMANCE_CHECK_GENERATED)
 
-    # Double dereference SOURCES_VAR as SOURCES_VAR
-    # just refers to the list name and not the list itself
-    _filter_sources_list (FILTERED_SOURCES
-                          SOURCES ${${SOURCES_VAR}}
-                          ${CHECK_GENERATED_OPTION})
+    _verapp_get_commandline_list (COMMAND_LIST
+                                  SOURCES ${${SOURCES_VAR}}
+                                  PROFILE ${PROFILE}
+                                  MODE ${MODE}
+                                  ${CHECK_GENERATED_OPTION})
 
-    foreach (_source ${FILTERED_SOURCES})
-
-        add_custom_command (TARGET ${TARGET}
-                            ${WHEN}
-                            COMMAND
-                            ${VERAPP_EXECUTABLE}
-                            ARGS
-                            ${_source}
-                            --profile ${PROFILE}
-                            --show-rule
-                            ${_verapp_failure_mode}
-                            WORKING_DIRECTORY ${VERAPP_DIRECTORY})
-
-    endforeach ()
-
-    add_dependencies (${TARGET} ${IMPORT_TARGET})
+    add_custom_command (TARGET ${TARGET}
+                        ${WHEN}
+                        ${COMMAND_LIST}
+                        DEPENDS ${IMPORT_TARGET}
+                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
 
 endfunction (_verapp_profile_check_sources_conformance_for_target)
 
@@ -386,7 +439,7 @@ endfunction (_verapp_profile_check_sources_conformance_for_target)
 #                    are stored
 # SOURCES : The sources to check for conformance
 # PROFILE : The vera++ profile to run
-# TARGET : The target to attach to
+# TARGET : The target to create
 # MODE : Either "WARN_ONLY" or "ERROR", the former printing a
 #        warning and continuing or the latter forcing an error
 # [Optional] CHECK_GENERATED : Whether or not to check generated
@@ -400,13 +453,36 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
 
     _verapp_check_sources_conformance_invariants (${MODE})
 
-    _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
-                                                          ${SOURCES_LIST_VAR}
-                                                          ${PROFILE}
-                                                          ${TARGET}
-                                                          ${IMPORT_TARGET}
-                                                          ${MODE}
-                                                          ${ARGN})
+    cmake_parse_arguments (CHECK_CONFORMANCE
+                           "${CHECK_CONFORMANCE_OPTIONS}"
+                           ""
+                           ""
+                           ${ARGN})
+    set (CHECK_GENERATED_OPTION)
+    if (CHECK_CONFORMANCE_CHECK_GENERATED)
+        set (CHECK_GENERATED_OPTION CHECK_GENERATED)
+    endif (CHECK_CONFORMANCE_CHECK_GENERATED)
+
+    _verapp_get_commandline_list (COMMAND_LIST
+                                  SOURCES ${${SOURCES_LIST_VAR}}
+                                  PROFILE ${PROFILE}
+                                  MODE ${MODE}
+                                  ${CHECK_GENERATED_OPTION})
+
+    set (STAMPFILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.stamp)
+
+    add_custom_command (OUTPUT ${STAMPFILE}
+                        ${COMMAND_LIST}
+                        WORKING_DIRECTORY
+                        ${VERAPP_DIRECTORY}
+                        DEPENDS
+                        ${${SOURCES_LIST_VAR}}
+                        ${IMPORT_TARGET}
+                        COMMENT "Vera++ check for source group: ${TARGET}")
+
+    add_custom_target (${TARGET} ALL
+                       DEPENDS
+                       ${STAMPFILE})
 
 endfunction (verapp_profile_check_source_files_conformance_for_target)
 
