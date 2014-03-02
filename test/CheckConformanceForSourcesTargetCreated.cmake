@@ -1,5 +1,6 @@
-# /tests/CheckConformanceForSources.cmake
+# /tests/CheckConformanceForSourcesTargetCreated.cmake
 # Creates a new custom target but specifies a list of sources.
+# Exit-with-error mode is turned on.
 #
 # See LICENCE.md for Copyright information
 
@@ -36,4 +37,6 @@ verapp_profile_check_source_files_conformance_for_target (${VERAPP_DIR}
                                                           default
                                                           other_target
                                                           on_all
-                                                          WARN_ONLY)
+                                                          ERROR)
+
+assert_target_exists (other_target)

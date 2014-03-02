@@ -3,6 +3,13 @@
 #
 # See LICENCE.md for Copyright information
 
+if (POLICY CMP0025)
+
+    cmake_policy (SET CMP0025 NEW)
+
+endif (POLICY CMP0025)
+
+project (VeraPPCMakeTests)
 cmake_minimum_required (VERSION 2.8)
 
 # We assume that it is one-above us
@@ -33,6 +40,7 @@ bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
 
 add_cmake_test (ListFilesInExternalDirectory)
 add_cmake_test (ListFilesInExternalDirectoryMatching)
+add_cmake_test (CheckConformanceForSourcesTargetCreated)
 add_cmake_build_test (CopyFilesInDirToSubdirOnTarget
                       CopyFilesInDirToSubdirOnTargetVerify)
 add_cmake_build_test (ImportDefaultRulesIntoSubdirOnTarget
