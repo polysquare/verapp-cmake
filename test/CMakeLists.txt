@@ -61,3 +61,9 @@ add_cmake_build_test (CheckConformanceForSources
                       CheckConformanceForSourcesVerify)
 add_cmake_build_test (CheckConformanceForSourcesErrorMode
                       CheckConformanceForSourcesErrorModeVerify)
+add_cmake_build_test (CheckConformanceForSourcesStampfileGenerated
+                      CheckConformanceForSourcesStampfileGeneratedVerify)
+add_cmake_build_test (SourcesConformanceNotRunIfStampfileExists
+                      SourcesConformanceNotRunIfStampfileExistsVerify)
+add_cmake_build_test (SourcesConformanceReRunIfSourcesUpdated
+                      SourcesConformanceReRunIfSourcesUpdatedVerify)

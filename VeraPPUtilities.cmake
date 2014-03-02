@@ -453,6 +453,8 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
 
     _verapp_check_sources_conformance_invariants (${MODE})
 
+    set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED)
+
     cmake_parse_arguments (CHECK_CONFORMANCE
                            "${CHECK_CONFORMANCE_OPTIONS}"
                            ""
@@ -473,6 +475,7 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
 
     add_custom_command (OUTPUT ${STAMPFILE}
                         ${COMMAND_LIST}
+                        COMMAND ${CMAKE_COMMAND} -E touch ${STAMPFILE}
                         WORKING_DIRECTORY
                         ${VERAPP_DIRECTORY}
                         DEPENDS
