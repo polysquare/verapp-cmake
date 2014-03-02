@@ -1,6 +1,8 @@
 # /tests/CheckConformanceForSourcesTargetCreated.cmake
-# Creates a new custom target but specifies a list of sources.
+# Specifies a list of sources to be checked as part of a group.
 # Exit-with-error mode is turned on.
+#
+# Checks that a new target is created when adding the check.
 #
 # See LICENCE.md for Copyright information
 
