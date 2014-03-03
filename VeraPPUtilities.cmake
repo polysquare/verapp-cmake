@@ -423,11 +423,17 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                                   MODE ${MODE}
                                   ${CHECK_GENERATED_OPTION})
 
+    # Ensure that the directory always exists.
+    file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
+
+    # DEPENDS with a target name doesn't quite work on this situation
+    # so just add a dependency on the normal target.
     add_custom_command (TARGET ${TARGET}
                         ${WHEN}
                         ${COMMAND_LIST}
-                        DEPENDS ${IMPORT_TARGET}
                         WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+
+    add_dependencies (${TARGET} ${IMPORT_TARGET})
 
 endfunction (_verapp_profile_check_sources_conformance_for_target)
 
@@ -473,6 +479,9 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
 
     set (STAMPFILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.stamp)
 
+    # Ensure that the directory always exists.
+    file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
+
     add_custom_command (OUTPUT ${STAMPFILE}
                         ${COMMAND_LIST}
                         COMMAND ${CMAKE_COMMAND} -E touch ${STAMPFILE}
@@ -480,12 +489,12 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
                         ${VERAPP_DIRECTORY}
                         DEPENDS
                         ${${SOURCES_LIST_VAR}}
-                        ${IMPORT_TARGET}
                         COMMENT "Vera++ check for source group: ${TARGET}")
 
     add_custom_target (${TARGET} ALL
                        DEPENDS
-                       ${STAMPFILE})
+                       ${STAMPFILE}
+                       ${IMPORT_TARGET})
 
 endfunction (verapp_profile_check_source_files_conformance_for_target)
 
