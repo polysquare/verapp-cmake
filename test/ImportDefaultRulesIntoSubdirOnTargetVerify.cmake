@@ -34,5 +34,3 @@ assert_file_exists (${DESTINATION_DIRECTORY}/T016.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/T017.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/T018.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/T019.tcl)
-
-assert_file_contains (${BUILD_OUTPUT} "Importing Vera++ rule")

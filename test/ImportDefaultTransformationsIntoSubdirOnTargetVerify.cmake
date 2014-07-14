@@ -16,5 +16,3 @@ assert_file_exists (${DESTINATION_DIRECTORY}/to_lower.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/to_xml.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/to_xml2.tcl)
 assert_file_exists (${DESTINATION_DIRECTORY}/trim_right.tcl)
-
-assert_file_contains (${BUILD_OUTPUT} "Importing Vera++ transformation")

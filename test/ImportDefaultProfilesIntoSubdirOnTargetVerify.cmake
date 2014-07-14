@@ -10,5 +10,3 @@ set (BUILD_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/BUILD.output)
 assert_file_exists (${DESTINATION_DIRECTORY}/boost)
 assert_file_exists (${DESTINATION_DIRECTORY}/default)
 assert_file_exists (${DESTINATION_DIRECTORY}/full)
-
-assert_file_contains (${BUILD_OUTPUT} "Importing Vera++ profile")
