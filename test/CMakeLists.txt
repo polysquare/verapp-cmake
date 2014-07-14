@@ -43,6 +43,18 @@ add_cmake_test (ListFilesInExternalDirectoryMatching)
 add_cmake_test (CheckConformanceForSourcesTargetCreated)
 add_cmake_build_test (CopyFilesInDirToSubdirOnTarget
                       CopyFilesInDirToSubdirOnTargetVerify)
+
+if (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+    add_cmake_build_test (CopyFilesInDirToSubdirOnTargetWithComment
+                          CopyFilesInDirToSubdirOnTargetWithCommentVerify)
+    add_cmake_build_test (ImportDefaultRulesIntoSubdirOnTargetWithComment
+                          ImportDefaultRulesIntoSubdirOnTargetVerify)
+    add_cmake_build_test (ImportDefaultTransformationsIntoSubdirOnTargetWithComment
+                          ImportDefaultTransformationsIntoSubdirOnTargetWithCommentVerify)
+    add_cmake_build_test (ImportDefaultProfilesIntoSubdirOnTargetWithComment
+                          ImportDefaultProfilesIntoSubdirOnTargetWithCommentVerify)
+endif (CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+
 add_cmake_build_test (ImportDefaultRulesIntoSubdirOnTarget
                       ImportDefaultRulesIntoSubdirOnTargetVerify)
 add_cmake_build_test (ImportDefaultTransformationsIntoSubdirOnTarget
@@ -63,7 +75,12 @@ add_cmake_build_test (CheckConformanceForSourcesErrorMode
                       CheckConformanceForSourcesErrorModeVerify)
 add_cmake_build_test (CheckConformanceForSourcesStampfileGenerated
                       CheckConformanceForSourcesStampfileGeneratedVerify)
-add_cmake_build_test (SourcesConformanceNotRunIfStampfileExists
-                      SourcesConformanceNotRunIfStampfileExistsVerify)
 add_cmake_build_test (SourcesConformanceReRunIfSourcesUpdated
                       SourcesConformanceReRunIfSourcesUpdatedVerify)
+
+# The ninja-generator does dependency scanning pre-build, so the hack this
+# test uses to satisfy dependencies during the build won't work on it.
+if (NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    add_cmake_build_test (SourcesConformanceNotRunIfStampfileExists
+                          SourcesConformanceNotRunIfStampfileExistsVerify)
+endif (NOT CMAKE_GENERATOR STREQUAL "Ninja")
