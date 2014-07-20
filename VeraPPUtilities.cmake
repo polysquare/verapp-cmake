@@ -26,7 +26,7 @@ macro (_validate_verapp CONTINUE)
 
     endif (NOT DEFINED VeraPP_FOUND)
 
-    set (${CONTINUE} VeraPP_FOUND)
+    set (${CONTINUE} ${VeraPP_FOUND})
 
 endmacro (_validate_verapp)
 
