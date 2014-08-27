@@ -1,5 +1,6 @@
 Vera++ CMake Modules
 =============
+[![Build Status](https://travis-ci.org/polysquare/veracpp-cmake.svg?branch=master)](https://travis-ci.org/polysquare/veracpp-cmake)
 
 veracpp-cmake is a both a Find* and Utilities module to integrate with the
 CMake Buildsystem. Import this as a git submodule and change your
