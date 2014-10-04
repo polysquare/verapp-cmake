@@ -121,13 +121,10 @@ endfunction (verapp_copy_files_in_dir_to_subdir_on_target)
 #
 # SUBDIRECTORY : The subdirectory to import the rules into
 # TARGET : The target to run the importation before
-function (verapp_import_default_rules_into_subdirectory_on_target
-          SUBDIRECTORY
-          TARGET)
-    if (NOT VERAPP_RULES)
-        message (FATAL_ERROR "VERAPP_RULES must be set before using "
-                             "this command")
-    endif (NOT VERAPP_RULES)
+function (verapp_import_default_rules_into_subdirectory_on_target SUBDIRECTORY
+                                                                  TARGET)
+    psq_assert_set (VERAPP_RULES "VERAPP_RULES must be set before using "
+                                 "this command")
 
     set (_new_target ${TARGET}_verapp_import_default_rules)
 
@@ -153,13 +150,10 @@ endfunction (verapp_import_default_rules_into_subdirectory_on_target)
 #
 # SUBDIRECTORY : The subdirectory to import the transformations into
 # TARGET : The target to run the importation before
-function (verapp_import_default_transformations_into_subdirectory_on_target
-          SUBDIRECTORY
-          TARGET)
-    if (NOT VERAPP_TRANSFORMATIONS)
-        message (FATAL_ERROR "VERAPP_TRANSFORMATIONS must be set before using "
-                             "this command")
-    endif (NOT VERAPP_TRANSFORMATIONS)
+function (verapp_import_default_transformations_into_subdirectory_on_target SUBDIRECTORY
+                                                                            TARGET)
+    psq_assert_set (VERAPP_TRANSFORMATIONS "VERAPP_TRANSFORMATIONS must be set "
+                                           "before using this command")
 
     set (_new_target ${TARGET}_verapp_import_default_transformations)
 
@@ -186,74 +180,21 @@ endfunction (verapp_import_default_transformations_into_subdirectory_on_target)
 #
 # SUBDIRECTORY : The subdirectory to import the profiles into
 # TARGET : The target to run the profiles before
-function (verapp_import_default_profiles_into_subdirectory_on_target
-          SUBDIRECTORY
-          TARGET)
-    if (NOT VERAPP_PROFILES)
-        message (FATAL_ERROR "VERAPP_PROFILES must be set before using "
-                             "this command")
-    endif (NOT VERAPP_PROFILES)
+function (verapp_import_default_profiles_into_subdirectory_on_target SUBDIR
+                                                                     TARGET)
+    psq_assert_set (VERAPP_PROFILES "VERAPP_PROFILES must be set before using "
+                                    "this command")
 
     set (_new_target ${TARGET}_verapp_import_default_profiles)
 
     verapp_copy_files_in_dir_to_subdir_on_target (${_new_target}
                                                   COMMENT "Vera++ profile"
                                                   DIRECTORY ${VERAPP_PROFILES}
-                                                  DESTINATION ${SUBDIRECTORY})
+                                                  DESTINATION ${SUBDIR})
 
     add_dependencies (${TARGET}
                       ${_new_target})
 endfunction (verapp_import_default_profiles_into_subdirectory_on_target)
-
-function (_verapp_check_sources_conformance_invariants MODE)
-
-    if (NOT VERAPP_EXECUTABLE)
-        message (FATAL_ERROR "VERAPP_EXECUTABLE must be set before using "
-                             "this command")
-    endif (NOT VERAPP_EXECUTABLE)
-
-    if (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
-        message (FATAL_ERROR "MODE must be WARN_ONLY or ERROR, was ${MODE}")
-    endif (NOT MODE STREQUAL "WARN_ONLY" AND NOT MODE STREQUAL "ERROR")
-
-endfunction (_verapp_check_sources_conformance_invariants)
-
-function (_filter_sources_list RESULT_SOURCES_VARIABLE)
-
-    set (FILTER_SOURCES_LIST_MULTIVAR_OPTIONS SOURCES)
-    set (FILTER_SOURCES_LIST_OPTIONS ALLOW_GENERATED)
-
-    cmake_parse_arguments (FILTER_SOURCES_LIST
-                           "${FILTER_SOURCES_LIST_OPTIONS}"
-                           ""
-                           "${FILTER_SOURCES_LIST_MULTIVAR_OPTIONS}"
-                           ${ARGN})
-
-    set (FILTERED_SOURCES)
-
-    foreach (SOURCE ${FILTER_SOURCES_LIST_SOURCES})
-        get_property (SOURCE_IS_GENERATED
-                      SOURCE ${SOURCE}
-                      PROPERTY GENERATED)
-
-        if (SOURCE_IS_GENERATED)
-            # If we're allowing GENERATED sources then immediately
-            # add them to the filtered sources list, otherwise skip them.
-            if (FILTER_SOURCES_LIST_ALLOW_GENERATED)
-                list (APPEND FILTERED_SOURCES ${SOURCE})
-                break ()
-            else (FILTER_SOURCES_LIST_ALLOW_GENERATED)
-                break ()
-            endif (FILTER_SOURCES_LIST_ALLOW_GENERATED)
-
-        else (SOURCE_IS_GENERATED)
-            list (APPEND FILTERED_SOURCES ${SOURCE})
-        endif (SOURCE_IS_GENERATED)
-    endforeach ()
-
-    set (${RESULT_SOURCES_VARIABLE} ${FILTERED_SOURCES} PARENT_SCOPE)
-
-endfunction ()
 
 # Returns a list of command lines to run, each command being separated by
 # the COMMAND operator, so that the entire list can be passed directly
@@ -286,7 +227,7 @@ function (_verapp_get_commandline_list COMMANDLINES_RETURN)
     # so the build will never fail. If WARN_ONLY
     # is not set, then --error is passed and a nonzero
     # exit code is always returned on failure.
-    psq_add_switch (_verapp_failure_mode WARN_ONLY
+    psq_add_switch (_verapp_failure_mode GET_COMMANDLINE_WARN_ONLY
                     ON --warning
                     OFF --error)
 
@@ -312,104 +253,6 @@ function (_verapp_get_commandline_list COMMANDLINES_RETURN)
 
 endfunction (_verapp_get_commandline_list)
 
-function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
-                                                               SOURCES_VAR
-                                                               PROFILE
-                                                               TARGET
-                                                               IMPORT_TARGET
-                                                               MODE)
-
-    psq_get_target_command_attach_point (${TARGET} WHEN)
-
-    set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED)
-
-    cmake_parse_arguments (CHECK_CONFORMANCE
-                           "${CHECK_CONFORMANCE_OPTIONS}"
-                           ""
-                           ""
-                           ${ARGN})
-    psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
-                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS})
-
-    _verapp_get_commandline_list (COMMAND_LIST
-                                  SOURCES ${${SOURCES_VAR}}
-                                  PROFILE ${PROFILE}
-                                  MODE ${MODE}
-                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
-
-    # Ensure that the directory always exists.
-    file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
-
-    # DEPENDS with a target name doesn't quite work on this situation
-    # so just add a dependency on the normal target.
-    add_custom_command (TARGET ${TARGET}
-                        ${WHEN}
-                        ${COMMAND_LIST}
-                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
-
-    add_dependencies (${TARGET} ${IMPORT_TARGET})
-
-endfunction (_verapp_profile_check_sources_conformance_for_target)
-
-# verapp_profile_check_source_files_list_conformance_for_target
-# Run vera++ on the source files provided after building the target
-# specified
-#
-# VERAPP_DIRECTORY : The directory where the vera++ scripts and profiles
-#                    are stored
-# SOURCES : The sources to check for conformance
-# PROFILE : The vera++ profile to run
-# TARGET : The target to create
-# MODE : Either "WARN_ONLY" or "ERROR", the former printing a
-#        warning and continuing or the latter forcing an error
-# [Optional] CHECK_GENERATED : Whether or not to check generated
-#                              source files too.
-function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECTORY
-                                                                   SOURCES_LIST_VAR
-                                                                   PROFILE
-                                                                   TARGET
-                                                                   IMPORT_TARGET
-                                                                   MODE)
-
-    _verapp_check_sources_conformance_invariants (${MODE})
-
-    set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED)
-
-    cmake_parse_arguments (CHECK_CONFORMANCE
-                           "${CHECK_CONFORMANCE_OPTIONS}"
-                           ""
-                           ""
-                           ${ARGN})
-    psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
-                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS})
-
-    _verapp_get_commandline_list (COMMAND_LIST
-                                  SOURCES ${${SOURCES_LIST_VAR}}
-                                  PROFILE ${PROFILE}
-                                  MODE ${MODE}
-                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
-
-    set (STAMPFILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.stamp)
-
-    # Ensure that the directory always exists.
-    file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
-
-    add_custom_command (OUTPUT ${STAMPFILE}
-                        ${COMMAND_LIST}
-                        COMMAND ${CMAKE_COMMAND} -E touch ${STAMPFILE}
-                        WORKING_DIRECTORY
-                        ${VERAPP_DIRECTORY}
-                        DEPENDS
-                        ${${SOURCES_LIST_VAR}}
-                        COMMENT "Vera++ check for source group: ${TARGET}")
-
-    add_custom_target (${TARGET} ALL
-                       DEPENDS
-                       ${STAMPFILE}
-                       ${IMPORT_TARGET})
-
-endfunction (verapp_profile_check_source_files_conformance_for_target)
-
 # verapp_profile_check_source_files_conformance
 #
 # Run vera++ on the source files used to build the target
@@ -419,33 +262,52 @@ endfunction (verapp_profile_check_source_files_conformance_for_target)
 #                    are stored
 # PROFILE : The vera++ profile to run
 # TARGET : The target to scan
-# MODE : Either "WARN_ONLY" or "ERROR", the latter printing
-#        a warning and continuing, the latter forcing an error
+# [Optional] WARN_ONLY : Only output a warning when there is a style violation.
 # [Optional] CHECK_GENERATED : Whether or not to check generated
 #                              source files too.
-function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
-                                                        PROFILE
-                                                        TARGET
-                                                        IMPORT_TARGET
-                                                        MODE)
+# [Optional] DEPENDS : Targets to depend on
+function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY)
 
-    _verapp_check_sources_conformance_invariants (${MODE})
-    psq_strip_add_custom_target_sources (_verapp_profile_check_target_sources
-                                         ${TARGET})
+    psq_assert_set (VERAPP_EXECUTABLE "VERAPP_EXECUTABLE must be set before "
+                                      "using this command")
 
-    set (_sources)
-    foreach (_verapp_target_source ${_verapp_profile_check_target_sources})
-        list (APPEND _sources
-              ${_verapp_target_source})
-    endforeach (_verapp_target_source)
+    set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED WARN_ONLY)
+    set (CHECK_CONFORMANCE_SINGLEVAR_ARGS PROFILE TARGET)
+    set (CHECK_CONFORMANCE_MULTIVAR_ARGS DEPENDS)
 
-    _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
-                                                          _sources
-                                                          ${PROFILE}
-                                                          ${TARGET}
-                                                          ${IMPORT_TARGET}
-                                                          ${MODE}
-                                                          ${ARGN})
+    cmake_parse_arguments (CHECK_CONFORMANCE
+                           "${CHECK_CONFORMANCE_OPTIONS}"
+                           "${CHECK_CONFORMANCE_SINGLEVAR_ARGS}"
+                           "${CHECK_CONFORMANCE_MULTIVAR_ARGS}"
+                           ${ARGN})
+    psq_assert_set (CHECK_CONFORMANCE_TARGET "Must specify a TARGET to run checks on")
+    psq_assert_set (CHECK_CONFORMANCE_PROFILE "Must specify PROFILE to run checks with")
+
+    psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
+                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS}
+                         SINGLEVAR_ARGS PROFILE)
+
+    psq_strip_add_custom_target_sources (FILTERED_SOURCES
+                                         ${CHECK_CONFORMANCE_TARGET})
+    _verapp_get_commandline_list (COMMAND_LIST
+                                  SOURCES ${FILTERED_SOURCES}
+                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
+
+    psq_get_target_command_attach_point (${CHECK_CONFORMANCE_TARGET} WHEN)
+
+    # Ensure that the directory always exists.
+    file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
+
+    # DEPENDS with a target name doesn't quite work on this situation
+    # so just add a dependency on the normal target.
+    add_custom_command (TARGET ${CHECK_CONFORMANCE_TARGET}
+                        ${WHEN}
+                        ${COMMAND_LIST}
+                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+
+    if (CHECK_CONFORMANCE_DEPENDS)
+        add_dependencies (${CHECK_CONFORMANCE_TARGET}
+                          ${CHECK_CONFORMANCE_DEPENDS})
+    endif (CHECK_CONFORMANCE_DEPENDS)
 
 endfunction (verapp_profile_check_source_files_conformance)
-        

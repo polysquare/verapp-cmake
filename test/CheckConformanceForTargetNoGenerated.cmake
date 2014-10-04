@@ -52,7 +52,7 @@ verapp_import_default_profiles_into_subdirectory_on_target (${PROFILES_SUBDIR}
 set (VERAPP_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 verapp_profile_check_source_files_conformance (${VERAPP_DIR}
-                                               default
-                                               other_target
-                                               on_all
+                                               PROFILE default
+                                               TARGET other_target
+                                               DEPENDS on_all
                                                WARN_ONLY)
