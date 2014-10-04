@@ -29,11 +29,12 @@ file (MAKE_DIRECTORY ${DESTINATION_DIRECTORY})
 file (WRITE ${FIRST_FILE} "")
 file (WRITE ${SECOND_FILE} "")
 
-verapp_copy_files_in_dir_to_subdir_on_target (${DIRECTORY_WITH_FILES}
+verapp_copy_files_in_dir_to_subdir_on_target (copy_files
+                                              COMMENT "My File"
+                                              DIRECTORY ${DIRECTORY_WITH_FILES}
+                                              DESTINATION
                                               ${DESTINATION_DIRECTORY}
-                                              NO_MATCH
-                                              copy_files
-                                              "My File")
+                                              MATCH "*File")
 
 add_custom_target (on_all ALL)
 add_dependencies (on_all copy_files)

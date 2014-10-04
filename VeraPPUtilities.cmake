@@ -4,93 +4,41 @@
 
 # verapp_list_files_in_external_directory
 #
-# Workaround for file (GLOB ...) only working on
-# the current directory. We use ls | grep ${MATCH}
-# in order to find those files
+# Searches any external directory path, relative or absolute for
+# files which match MATCH.
 #
-# This is unfortunately Unix-only at the moment,
-# feel free to submit an alternative to Windows
-#
-# DIRECTORY : Directory to list files from. Must end with a "/"
-# MATCH : Pattern used to match files to list or NO_MATCH.
-#         Not a regex or globbing expression.
 # RETURN_FILES : The name of a variable to store a list
 #                of fully-qualified files
+# [Optional] DIRECTORY : Directory to list files from. Must end with a "/". If
+#                        not specified, the CMAKE_CURRENT_SOURCE_DIR is used.
+# [Optional] MATCH : Globbing expression used to match files.
 #
 # See LICENCE.md for Copyright info
 
 include (CMakeParseArguments)
+include (${CMAKE_CURRENT_LIST_DIR}/tooling-cmake-util/PolysquareToolingUtil.cmake)
 
-function (verapp_list_files_in_external_directory DIRECTORY MATCH RETURN_FILES)
-    find_program (_verapp_ls ls)
-    mark_as_advanced (_verapp_ls)
+function (verapp_list_files_in_external_directory RETURN_FILES)
+    set (VERAPP_LIST_FILES_SINGLVAR_ARGS DIRECTORY MATCH)
 
-    if (${_verapp_ls} STREQUAL "_verapp_ls-NOTFOUND")
-        message (FATAL_ERROR "A Unix userland containing 'ls' was not found")
-    endif (${_verapp_ls} STREQUAL "_verapp_ls-NOTFOUND")
+    cmake_parse_arguments (VERAPP_LIST_FILES
+                           ""
+                           "${VERAPP_LIST_FILES_SINGLVAR_ARGS}"
+                           ""
+                           ${ARGN})
 
-    find_program (_verapp_grep grep)
-    mark_as_advanced (_verapp_grep)
+    get_filename_component (ABSOLUTE_PATH
+                            ${VERAPP_LIST_FILES_DIRECTORY}
+                            ABSOLUTE)
 
-    if (${_verapp_ls} STREQUAL "_verapp_grep-NOTFOUND")
-        message (FATAL_ERROR "A Unix userland containing 'grep' was not found")
-    endif (${_verapp_ls} STREQUAL "_verapp_grep-NOTFOUND")
+    if (NOT VERAPP_LIST_FILES_MATCH)
 
-    string (LENGTH "${DIRECTORY}" _verapp_list_directory_string_length)
-    math (EXPR _verapp_list_directory_second_last_char_index
-               "${_verapp_list_directory_string_length} - 1")
-    string (SUBSTRING
-            ${DIRECTORY}
-            ${_verapp_list_directory_second_last_char_index}
-            1
-            _verapp_list_directory_string_second_last_char)
+        set (VERAPP_LIST_FILES_MATCH *)
 
-    if (NOT _verapp_list_directory_string_second_last_char STREQUAL "/")
-        message (FATAL_ERROR "DIRECTORY passed to "
-                             "verapp_list_files_in_external_directory must "
-                             "end with a /")
-    endif (NOT _verapp_list_directory_string_second_last_char STREQUAL "/")
+    endif (NOT VERAPP_LIST_FILES_MATCH)
 
-    # ls ${DIRECTORY} | grep ${MATCH}
-    set (_verapp_grep_command COMMAND ${_verapp_grep} ${MATCH})
-
-    # If we don't want to match anything, then just neuter the grep
-    # command
-    if (${MATCH} STREQUAL "NO_MATCH")
-        set (_verapp_grep_command)
-    endif (${MATCH} STREQUAL "NO_MATCH")
-
-    execute_process (COMMAND ${_verapp_ls} ${DIRECTORY}
-                     ${_verapp_grep_command}
-                     RESULT_VARIABLE _verapp_ls_result
-                     OUTPUT_VARIABLE _verapp_ls_output
-                     ERROR_VARIABLE _verapp_ls_error)
-
-    # Success
-    if (${_verapp_ls_result} EQUAL 0)
-        # Replace \n with ;
-        string (REPLACE "\n" ";" _verapp_ls_list ${_verapp_ls_output})
-
-        # For each item in the new list, add it to the 
-        # _verapp_ls_return_list var along with the DIRECTORY prefixed
-        foreach (_verapp_ls_list_item ${_verapp_ls_list})
-            string (STRIP ${_verapp_ls_list_item} verapp_ls_list_item)
-
-            # Don't include any items that are zero-length
-            string (LENGTH "${_verapp_ls_list_item}"
-                    _verapp_ls_list_item_length)
-
-            if (${_verapp_ls_list_item_length} GREATER 0)
-                list (APPEND _verapp_ls_return_list
-                      ${DIRECTORY}${_verapp_ls_list_item})
-            endif (${_verapp_ls_list_item_length} GREATER 0)
-        endforeach (_verapp_ls_list_item)
-
-        # Set RETURN_FILES in PARENT_SCOPE
-        set (${RETURN_FILES} ${_verapp_ls_return_list} PARENT_SCOPE)
-    else (${_verapp_ls_result} EQUAL 0)
-        message (FATAL_ERROR "ls ${DIRECTORY}:" ${_verapp_ls_error})
-    endif (${_verapp_ls_result} EQUAL 0)
+    file (GLOB RESULT "${ABSOLUTE_PATH}/${VERAPP_LIST_FILES_MATCH}")
+    set (${RETURN_FILES} ${RESULT} PARENT_SCOPE)
 endfunction (verapp_list_files_in_external_directory)
 
 # verapp_copy_files_in_dir_to_subdir_on_target
@@ -98,66 +46,63 @@ endfunction (verapp_list_files_in_external_directory)
 # Creates a new target that copies all of the files
 # matching the criteria to the destination directory
 #
-# SOURCE : The directory to scan for files
+# TARGET : The name of the target to create, not run by default
+# DIRECTORY : The source directory to scan for files
 # DESTINATION : The directory to copy the files into
 # MATCH : The globbing expression to match files
-# TARGET : The name of the target to create, not run by default
-# WHAT : A brief description of what is being copied
-function (verapp_copy_files_in_dir_to_subdir_on_target
-          SOURCE
-          DESTINATION
-          MATCH
-          TARGET
-          WHAT)
+# [Optional] COMMENT : A brief description of what is being copied
+function (verapp_copy_files_in_dir_to_subdir_on_target TARGET)
+    set (COPY_FILES_SINGLEVAR_ARGS
+         DESTINATION
+         DIRECTORY
+         MATCH
+         COMMENT)
+    cmake_parse_arguments (COPY_FILES
+                           ""
+                           "${COPY_FILES_SINGLEVAR_ARGS}"
+                           ""
+                           ${ARGN})
+    psq_assert_set (COPY_FILES_DESTINATION "Must specify a DESTINATION")
+    psq_assert_set (COPY_FILES_DIRECTORY "Must specify source DIRECTORY")
+
+    psq_forward_options (COPY_FILES LIST_FILES_FORWARD_OPTIONS
+                         SINGLEVAR_ARGS ${COPY_FILES_SINGLEVAR_ARGS})
+
     # Collect all the files to copy
     set (_verapp_import_files)
-    verapp_list_files_in_external_directory (${SOURCE}
-                                             "${MATCH}"
-                                             _verapp_import_files)
-
-    # We need to find cmake
-    find_program (_verapp_import_cmake cmake)
-    mark_as_advanced (_verapp_import_cmake)
+    verapp_list_files_in_external_directory (_verapp_import_files
+                                             ${LIST_FILES_FORWARD_OPTIONS})
 
     # Set the source files for the new "import" target to none
     set (_verapp_import_target_srcs)
 
-    # We will need the length of the source directory in order to
-    # determine how much we need to strip later
-    string (LENGTH "${SOURCE}" _verapp_import_source_length)
-
     # On each individual file ...
-    foreach (_verapp_import_file
-             ${_verapp_import_files})
-        set (_verapp_import_input_file_path
-             ${_verapp_import_file})
-        
-        # Get the output filename by stripping the preceeding path
-        string (SUBSTRING
-                "${_verapp_import_input_file_path}"
-                ${_verapp_import_source_length}
-                -1
-                _verapp_import_output_file)
+    foreach (_verapp_import_file ${_verapp_import_files})
+
+        # Get basename out output file.
+        get_filename_component (_output_file_name
+                                ${_verapp_import_file}
+                                NAME)
 
         # Get the fully-qualified output filename path
         set (_verapp_import_output_file_path
-             ${DESTINATION}/${_verapp_import_output_file})
+             ${COPY_FILES_DESTINATION}/${_output_file_name})
 
         # Add a new custom command to generate the imported rule within the
         # build directory
-        set (_verapp_out_file ${_verapp_import_output_file_path})
         add_custom_command (OUTPUT ${_verapp_import_output_file_path}
-                            COMMAND ${_verapp_import_cmake}
+                            COMMAND ${CMAKE_COMMAND}
                             ARGS -E copy_if_different
-                                    ${_verapp_import_input_file_path}
+                                    ${_verapp_import_file}
                                     ${_verapp_import_output_file_path}
-                            DEPENDS ${_verapp_import_input_file_path}
+                            DEPENDS ${_verapp_import_file}
                             COMMENT
-                            "Importing ${WHAT} ${_verapp_import_output_file}")
+                            "Importing ${COPY_FILES_COMMENT} ${_verapp_import_output_file}")
 
         # Add the imported file as a source for the input file target
         list (APPEND _verapp_import_target_srcs
               ${_verapp_import_output_file_path})
+
     endforeach (_verapp_import_file)
 
     add_custom_target (${TARGET}
@@ -186,11 +131,11 @@ function (verapp_import_default_rules_into_subdirectory_on_target
 
     set (_new_target ${TARGET}_verapp_import_default_rules)
 
-    verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_RULES}
-                                                  ${SUBDIRECTORY}
-                                                  .tcl
-                                                  ${_new_target}
-                                                  "Vera++ rule")
+    verapp_copy_files_in_dir_to_subdir_on_target (${_new_target}
+                                                  COMMENT "Vera++ rule"
+                                                  DIRECTORY ${VERAPP_RULES}
+                                                  DESTINATION ${SUBDIRECTORY}
+                                                  MATCH *.tcl)
 
     add_dependencies (${TARGET}
                       ${_new_target})
@@ -218,11 +163,13 @@ function (verapp_import_default_transformations_into_subdirectory_on_target
 
     set (_new_target ${TARGET}_verapp_import_default_transformations)
 
-    verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_TRANSFORMATIONS}
-                                                  ${SUBDIRECTORY}
-                                                  .tcl
-                                                  ${_new_target}
-                                                  "Vera++ transformation")
+    verapp_copy_files_in_dir_to_subdir_on_target (${_new_target}
+                                                  COMMENT
+                                                  "Vera++ transformation"
+                                                  DIRECTORY
+                                                  ${VERAPP_TRANSFORMATIONS}
+                                                  DESTINATION ${SUBDIRECTORY}
+                                                  MATCH *.tcl)
 
     add_dependencies (${TARGET}
                       ${_new_target})
@@ -249,11 +196,10 @@ function (verapp_import_default_profiles_into_subdirectory_on_target
 
     set (_new_target ${TARGET}_verapp_import_default_profiles)
 
-    verapp_copy_files_in_dir_to_subdir_on_target (${VERAPP_PROFILES}
-                                                  ${SUBDIRECTORY}
-                                                  NO_MATCH
-                                                  ${_new_target}
-                                                  "Vera++ profile")
+    verapp_copy_files_in_dir_to_subdir_on_target (${_new_target}
+                                                  COMMENT "Vera++ profile"
+                                                  DIRECTORY ${VERAPP_PROFILES}
+                                                  DESTINATION ${SUBDIRECTORY})
 
     add_dependencies (${TARGET}
                       ${_new_target})
@@ -315,9 +261,9 @@ endfunction ()
 function (_verapp_get_commandline_list COMMANDLINES_RETURN)
 
     set (GET_COMMANDLINE_OPTIONS
-         CHECK_GENERATED)
+         CHECK_GENERATED
+         WARN_ONLY)
     set (GET_COMMANDLINE_SINGLEVAR_ARGS
-         MODE
          PROFILE)
     set (GET_COMMANDLINE_MULTIVAR_ARGS
          SOURCES)
@@ -328,44 +274,24 @@ function (_verapp_get_commandline_list COMMANDLINES_RETURN)
                            "${GET_COMMANDLINE_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    if (NOT GET_COMMANDLINE_MODE)
-        message (FATAL_ERROR "MODE must be set in the options for "
-                             "_verapp_get_commandline_list")
-    endif (NOT GET_COMMANDLINE_MODE)
+    psq_assert_set (GET_COMMANDLINE_PROFILE
+                    "PROFILE must be set in the options for "
+                    "_verapp_get_commandline_list")
+    psq_assert_set (GET_COMMANDLINE_SOURCES
+                    "SOURCES must be set in the options for "
+                    "_verapp_get_commandline_list")
 
-    if (NOT GET_COMMANDLINE_PROFILE)
-        message (FATAL_ERROR "PROFILE must be set in the options for "
-                             "_verapp_get_commandline_list")
-    endif (NOT GET_COMMANDLINE_PROFILE)
-
-    if (NOT GET_COMMANDLINE_SOURCES)
-        message (FATAL_ERROR "SOURCES must be set in the options for "
-                             "_verapp_get_commandline_list")
-    endif (NOT GET_COMMANDLINE_SOURCES)
-
-    # ERROR passes --error to vera++ so that it
-    # returns a nonzero exit code on failure
-    if (GET_COMMANDLINE_MODE STREQUAL "ERROR")
-        set (_verapp_failure_mode
-             --error)
     # WARN_ONLY mode just runs vera++ and lets it
     # print to the stderr. It always returns success
-    # so the build will never fail
-    elseif (GET_COMMANDLINE_MODE STREQUAL "WARN_ONLY")
-        set (_verapp_failure_mode
-             --warning)
-    endif (GET_COMMANDLINE_MODE STREQUAL "ERROR")
+    # so the build will never fail. If WARN_ONLY
+    # is not set, then --error is passed and a nonzero
+    # exit code is always returned on failure.
+    psq_add_switch (_verapp_failure_mode WARN_ONLY
+                    ON --warning
+                    OFF --error)
 
-    set (CHECK_GENERATED_OPTION)
-    if (GET_COMMANDLINE_CHECK_GENERATED)
-        set (CHECK_GENERATED_OPTION ALLOW_GENERATED)
-    endif (GET_COMMANDLINE_CHECK_GENERATED)
-
-    # Double dereference SOURCES_VAR as SOURCES_VAR
-    # just refers to the list name and not the list itself
-    _filter_sources_list (FILTERED_SOURCES
-                          SOURCES ${GET_COMMANDLINE_SOURCES}
-                          ${CHECK_GENERATED_OPTION})
+    psq_handle_check_generated_option (GET_COMMANDLINE FILTERED_SOURCES
+                                       SOURCES ${GET_COMMANDLINE_SOURCES})
 
     set (COMMAND_LIST)
 
@@ -393,17 +319,7 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                                                                IMPORT_TARGET
                                                                MODE)
 
-    get_property (TARGET_TYPE
-                  TARGET ${TARGET}
-                  PROPERTY TYPE)
-
-    set (WHEN PRE_LINK)
-
-    if (TARGET_TYPE STREQUAL "UTILITY")
-
-        set (WHEN PRE_BUILD)
-
-    endif (TARGET_TYPE STREQUAL "UTILITY")
+    psq_get_target_command_attach_point (${TARGET} WHEN)
 
     set (CHECK_CONFORMANCE_OPTIONS CHECK_GENERATED)
 
@@ -412,16 +328,14 @@ function (_verapp_profile_check_sources_conformance_for_target VERAPP_DIRECTORY
                            ""
                            ""
                            ${ARGN})
-    set (CHECK_GENERATED_OPTION)
-    if (CHECK_CONFORMANCE_CHECK_GENERATED)
-        set (CHECK_GENERATED_OPTION CHECK_GENERATED)
-    endif (CHECK_CONFORMANCE_CHECK_GENERATED)
+    psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
+                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS})
 
     _verapp_get_commandline_list (COMMAND_LIST
                                   SOURCES ${${SOURCES_VAR}}
                                   PROFILE ${PROFILE}
                                   MODE ${MODE}
-                                  ${CHECK_GENERATED_OPTION})
+                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
 
     # Ensure that the directory always exists.
     file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
@@ -466,16 +380,14 @@ function (verapp_profile_check_source_files_conformance_for_target VERAPP_DIRECT
                            ""
                            ""
                            ${ARGN})
-    set (CHECK_GENERATED_OPTION)
-    if (CHECK_CONFORMANCE_CHECK_GENERATED)
-        set (CHECK_GENERATED_OPTION CHECK_GENERATED)
-    endif (CHECK_CONFORMANCE_CHECK_GENERATED)
+    psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
+                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS})
 
     _verapp_get_commandline_list (COMMAND_LIST
                                   SOURCES ${${SOURCES_LIST_VAR}}
                                   PROFILE ${PROFILE}
                                   MODE ${MODE}
-                                  ${CHECK_GENERATED_OPTION})
+                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
 
     set (STAMPFILE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.stamp)
 
@@ -518,29 +430,14 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY
                                                         MODE)
 
     _verapp_check_sources_conformance_invariants (${MODE})
-
-    get_target_property (_verapp_profile_check_target_sources
-                         ${TARGET}
-                         SOURCES)
+    psq_strip_add_custom_target_sources (_verapp_profile_check_target_sources
+                                         ${TARGET})
 
     set (_sources)
-    foreach (_verapp_target_source
-             ${_verapp_profile_check_target_sources})
+    foreach (_verapp_target_source ${_verapp_profile_check_target_sources})
         list (APPEND _sources
               ${_verapp_target_source})
     endforeach (_verapp_target_source)
-
-    get_target_property (_verapp_profile_check_target_type
-                         ${TARGET}
-                         TYPE)
-
-    # UTILITY targets are created by add_custom_target. They have
-    # one source, which is the stamp file created by the target
-    # which it outputs later. Remove that stamp file, as there may
-    # be other sources which we are about.
-    if (_verapp_profile_check_target_type STREQUAL "UTILITY")
-        list (REMOVE_AT _sources 0)
-    endif (_verapp_profile_check_target_type STREQUAL "UTILITY")
 
     _verapp_profile_check_sources_conformance_for_target (${VERAPP_DIRECTORY}
                                                           _sources
