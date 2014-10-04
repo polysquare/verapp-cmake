@@ -27,8 +27,8 @@ file (WRITE ${FILE_TO_MAKE} "")
 file (MAKE_DIRECTORY ${DIRECTORY_WITH_FILE})
 file (WRITE ${UNMATCHED_FILE_TO_MAKE} "")
 
-verapp_list_files_in_external_directory (${DIRECTORY_WITH_FILE}
-                                         "File"
+verapp_list_files_in_external_directory (MATCH "File"
+                                         DIRECTORY ${DIRECTORY_WITH_FILE}
                                          RETURN_VALUE)
 
 # Check the return value to make sure that we didn't get our
