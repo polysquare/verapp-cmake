@@ -97,7 +97,7 @@ function (verapp_copy_files_in_dir_to_subdir_on_target TARGET)
                                     ${_verapp_import_output_file_path}
                             DEPENDS ${_verapp_import_file}
                             COMMENT
-                            "Importing ${COPY_FILES_COMMENT} ${_verapp_import_output_file}")
+                            "Importing ${COPY_FILES_COMMENT} ${_output_file_name}")
 
         # Add the imported file as a source for the input file target
         list (APPEND _verapp_import_target_srcs
