@@ -40,7 +40,6 @@ bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
 
 add_cmake_test (ListFilesInExternalDirectory)
 add_cmake_test (ListFilesInExternalDirectoryMatching)
-add_cmake_test (CheckConformanceForSourcesTargetCreated)
 add_cmake_build_test (CopyFilesInDirToSubdirOnTarget
                       CopyFilesInDirToSubdirOnTargetVerify)
 
@@ -69,18 +68,5 @@ add_cmake_build_test (CheckConformanceForTargetGenerated
                       CheckConformanceForTargetGeneratedVerify)
 add_cmake_build_test (CheckConformanceForTargetNoGenerated
                       CheckConformanceForTargetNoGeneratedVerify)
-add_cmake_build_test (CheckConformanceForSources
-                      CheckConformanceForSourcesVerify)
-add_cmake_build_test (CheckConformanceForSourcesErrorMode
-                      CheckConformanceForSourcesErrorModeVerify)
-add_cmake_build_test (CheckConformanceForSourcesStampfileGenerated
-                      CheckConformanceForSourcesStampfileGeneratedVerify)
-add_cmake_build_test (SourcesConformanceReRunIfSourcesUpdated
-                      SourcesConformanceReRunIfSourcesUpdatedVerify)
-
-# The ninja-generator does dependency scanning pre-build, so the hack this
-# test uses to satisfy dependencies during the build won't work on it.
-if (NOT CMAKE_GENERATOR STREQUAL "Ninja")
-    add_cmake_build_test (SourcesConformanceNotRunIfStampfileExists
-                          SourcesConformanceNotRunIfStampfileExistsVerify)
-endif (NOT CMAKE_GENERATOR STREQUAL "Ninja")
+add_cmake_build_test (CheckConformanceForTargetErrorMode
+                      CheckConformanceForTargetErrorModeVerify)

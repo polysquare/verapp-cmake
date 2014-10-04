@@ -26,9 +26,10 @@ add_library (library SHARED
 
 set (RULES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/rules)
 set (PROFILES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/profiles)
+
 add_custom_target (on_all ALL)
 verapp_import_default_rules_into_subdirectory_on_target (${RULES_SUBDIR}
-	                                                     on_all)
+                                                       on_all)
                                                          
 verapp_import_default_profiles_into_subdirectory_on_target (${PROFILES_SUBDIR}
                                                             on_all)
@@ -37,7 +38,7 @@ verapp_import_default_profiles_into_subdirectory_on_target (${PROFILES_SUBDIR}
 set (VERAPP_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 verapp_profile_check_source_files_conformance (${VERAPP_DIR}
-                                               default
-                                               library
-                                               on_all
+                                               PROFILE default
+                                               TARGET library
+                                               DEPENDS on_all
                                                WARN_ONLY)

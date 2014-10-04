@@ -1,8 +1,6 @@
-# /tests/CheckConformanceForSourcesTargetCreated.cmake
-# Specifies a list of sources to be checked as part of a group.
+# /tests/CheckConformanceForTargetErrorMode.cmake
+# Creates a new custom target but specifies a list of sources.
 # Exit-with-error mode is turned on.
-#
-# Checks that a new target is created when adding the check.
 #
 # See LICENCE.md for Copyright information
 
@@ -25,7 +23,12 @@ file (WRITE ${SOURCE_FILE_NAME} ${SOURCE_FILE_CONTENTS})
 
 set (RULES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/rules)
 set (PROFILES_SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/scripts/profiles)
+
+add_custom_target (other_target ALL
+                   SOURCES ${SOURCE_FILE_NAME})
+
 add_custom_target (on_all ALL)
+
 verapp_import_default_rules_into_subdirectory_on_target (${RULES_SUBDIR}
 	                                                       on_all)
                                                          
@@ -34,11 +37,7 @@ verapp_import_default_profiles_into_subdirectory_on_target (${PROFILES_SUBDIR}
 
 set (VERAPP_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-verapp_profile_check_source_files_conformance_for_target (${VERAPP_DIR}
-                                                          SOURCE_FILE_NAME
-                                                          default
-                                                          other_target
-                                                          on_all
-                                                          ERROR)
-
-assert_target_exists (other_target)
+verapp_profile_check_source_files_conformance (${VERAPP_DIR}
+                                               PROFILE default
+                                               TARGET other_target
+                                               DEPENDS on_all)
