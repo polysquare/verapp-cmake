@@ -97,7 +97,6 @@ function (_find_verapp)
             PROFILES_PATH)
 
             set (VeraPP_FOUND TRUE)
-            set (VeraPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
             set (VERAPP_FOUND TRUE PARENT_SCOPE)
             set (VERAPP_EXECUTABLE ${VERAPP_EXECUTABLE} PARENT_SCOPE)
             set (VERAPP_VERSION ${VERAPP_VERSION} PARENT_SCOPE)
@@ -108,12 +107,21 @@ function (_find_verapp)
             psq_print_if_not_quiet (VeraPP "Vera++ version ${VERAPP_VERSION}"
                                            "found at ${VERAPP_EXECUTABLE}")
 
+        else (FOUND_APPROPRIATE_VERSION AND
+              TRANSFORMATIONS_PATH AND
+              RULES_PATH AND
+              PROFILES_PATH)
+
+            set (VeraPP_FOUND FALSE)
+
         endif (FOUND_APPROPRIATE_VERSION AND
                TRANSFORMATIONS_PATH AND
                RULES_PATH AND
                PROFILES_PATH)
 
     endif (VERAPP_EXECUTABLE)
+
+    set (VeraPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
 
     if (NOT VeraPP_FOUND)
 

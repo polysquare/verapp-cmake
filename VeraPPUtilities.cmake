@@ -18,33 +18,17 @@
 include (CMakeParseArguments)
 include (${CMAKE_CURRENT_LIST_DIR}/tooling-cmake-util/PolysquareToolingUtil.cmake)
 
-function (_validate_verapp CONTINUE)
+macro (_validate_verapp CONTINUE)
 
-    if (VERAPP_VERSION)
+    if (NOT DEFINED VeraPP_FOUND)
 
-        set (${CONTINUE} TRUE PARENT_SCOPE)
-        return ()
+        find_package (VeraPP ${ARGN})
 
-    endif (VERAPP_VERSION)
+    endif (NOT DEFINED VeraPP_FOUND)
 
-    find_package (VeraPP ${ARGN})
+    set (${CONTINUE} VeraPP_FOUND)
 
-    if (NOT VERAPP_FOUND)
-
-        set (${CONTINUE} FALSE PARENT_SCOPE)
-
-    else (NOT VERAPP_FOUND)
-
-        set (${CONTINUE} TRUE PARENT_SCOPE)
-        set (VERAPP_EXECUTABLE ${VERAPP_EXECUTABLE} PARENT_SCOPE)
-        set (VERAPP_PROFILES ${VERAPP_PROFILES} PARENT_SCOPE)
-        set (VERAPP_RULES ${VERAPP_RULES} PARENT_SCOPE)
-        set (VEARPP_TRANSFORMATIONS ${VERAPP_TRANSFORMATIONS} PARENT_SCOPE)
-        set (VERAPP_VERSION ${VERAPP_VERSION} PARENT_SCOPE)
-
-    endif (NOT VERAPP_FOUND)
-
-endfunction ()
+endmacro (_validate_verapp)
 
 function (verapp_list_files_in_external_directory RETURN_FILES)
     set (VERAPP_LIST_FILES_SINGLVAR_ARGS DIRECTORY MATCH)
