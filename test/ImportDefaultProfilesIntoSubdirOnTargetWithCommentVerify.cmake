@@ -1,7 +1,7 @@
 # /tests/ImportDefaultProfilesIntoSubdirOnTargetWithCommentVerify.cmake
 # Verifies that the comment "Importing Vera++ profile" was printed.
 
-include (${VERAPP_COMMON_UNIVERSAL_CMAKE_TESTS_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (DESTINATION_DIRECTORY
      ${CMAKE_CURRENT_BINARY_DIR}/subdirectory)
