@@ -4,8 +4,8 @@
 #
 # See LICENCE.md for Copyright information
 
-include (${VERAPP_COMMON_UNIVERSAL_CMAKE_DIRECTORY}/VeraPPUtilities.cmake)
-include (${VERAPP_COMMON_UNIVERSAL_CMAKE_TESTS_DIRECTORY}/CMakeUnit.cmake)
+include (VeraPPUtilities)
+include (CMakeUnit)
 
 set (CMAKE_MODULE_PATH
      ${VERAPP_COMMON_UNIVERSAL_CMAKE_DIRECTORY}
