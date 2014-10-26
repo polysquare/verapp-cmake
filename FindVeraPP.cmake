@@ -93,20 +93,13 @@ function (_find_verapp)
     endif (VERAPP_EXECUTABLE)
 
     psq_check_and_report_tool_version (VeraPP
-                                       "${CLANG_TIDY_VERSION}"
+                                       "${VERAPP_VERSION}"
                                        REQUIRED_VARS
                                        VERAPP_EXECUTABLE
                                        VERAPP_VERSION
                                        VERAPP_TRANSFORMATIONS
                                        VERAPP_RULES
                                        VERAPP_PROFILES)
-
-    psq_print_if_not_quiet (VeraPP
-                            MSG "VeraPP version"
-                                "${VERAPP_VERSION} found at"
-                                "${VERAPP_EXECUTABLE}"
-                            DEPENDS VERAPP_EXECUTABLE
-                                    VERAPP_VERSION)
 
     set (VeraPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
 
