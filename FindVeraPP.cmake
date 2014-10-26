@@ -19,7 +19,11 @@
 #
 # See LICENCE.md for Copyright info
 
-include (${CMAKE_CURRENT_LIST_DIR}/tooling-find-package-cmake-util/ToolingFindPackageUtil.cmake)
+set (CMAKE_MODULE_PATH
+     ${CMAKE_MODULE_PATH}
+     ${CMAKE_CURRENT_LIST_DIR}/tooling-find-package-cmake-util)
+
+include (ToolingFindPackageUtil)
 
 function (_find_verapp)
 
@@ -46,10 +50,6 @@ function (_find_verapp)
                                        VERSION_ARG --version
                                        VERSION_HEADER ""
                                        VERSION_END_TOKEN "\n")
-        psq_check_and_report_tool_version (VeraPP
-                                           ${VERAPP_VERSION}
-                                           FOUND_APPROPRIATE_VERSION)
-
         psq_find_executable_installation_root (${VERAPP_EXECUTABLE}
                                                INSTALL_ROOT
                                                PREFIX_SUBDIRECTORY
@@ -71,63 +71,44 @@ function (_find_verapp)
         # Find the other parts of the Vera++ installation
         psq_find_path_in_installation_root (${TRANSFORMATIONS_SUBDIR_LOC}
                                             ${TRANSFORMATIONS_SUBDIR}
-                                            TRANSFORMATIONS_PATH)
+                                            VERAPP_TRANSFORMATIONS)
         psq_find_path_in_installation_root (${RULES_SUBDIR_LOC}
                                             ${RULES_SUBDIR}
-                                            RULES_PATH)
+                                            VERAPP_RULES)
         psq_find_path_in_installation_root (${PROFILES_SUBDIR_LOC}
                                             ${PROFILES_SUBDIR}
-                                            PROFILES_PATH)
+                                            VERAPP_PROFILES)
 
         # Report any NOTFOUND paths
-        psq_report_not_found_if_not_quiet (VeraPP TRANSFORMATIONS_PATH
+        psq_report_not_found_if_not_quiet (VeraPP VERAPP_TRANSFORMATIONS
                                            "Path to vera++ transformations was "
                                            "not found in ${INSTALL_ROOT}")
-        psq_report_not_found_if_not_quiet (VeraPP RULES_PATH
+        psq_report_not_found_if_not_quiet (VeraPP VERAPP_RULES
                                            "Path to vera++ rules was not "
                                            "found in ${INSTALL_ROOT}")
-        psq_report_not_found_if_not_quiet (VeraPP PROFILES_PATH
+        psq_report_not_found_if_not_quiet (VeraPP VERAPP_PROFILES
                                            "Path to vera++ profiles was not "
                                            "found in ${INSTALL_ROOT}")
 
-        # If we found all the paths set VeraPP_FOUND and other related variables
-        if (FOUND_APPROPRIATE_VERSION AND
-            TRANSFORMATIONS_PATH AND
-            RULES_PATH AND
-            PROFILES_PATH)
-
-            set (VeraPP_FOUND TRUE)
-            set (VERAPP_FOUND TRUE PARENT_SCOPE)
-            set (VERAPP_EXECUTABLE ${VERAPP_EXECUTABLE} PARENT_SCOPE)
-            set (VERAPP_VERSION ${VERAPP_VERSION} PARENT_SCOPE)
-            set (VERAPP_RULES ${RULES_PATH} PARENT_SCOPE)
-            set (VERAPP_TRANSFORMATIONS ${TRANSFORMATIONS_PATH} PARENT_SCOPE)
-            set (VERAPP_PROFILES ${PROFILES_PATH} PARENT_SCOPE)
-
-            psq_print_if_not_quiet (VeraPP "Vera++ version ${VERAPP_VERSION}"
-                                           "found at ${VERAPP_EXECUTABLE}")
-
-        else (FOUND_APPROPRIATE_VERSION AND
-              TRANSFORMATIONS_PATH AND
-              RULES_PATH AND
-              PROFILES_PATH)
-
-            set (VeraPP_FOUND FALSE)
-
-        endif (FOUND_APPROPRIATE_VERSION AND
-               TRANSFORMATIONS_PATH AND
-               RULES_PATH AND
-               PROFILES_PATH)
-
     endif (VERAPP_EXECUTABLE)
 
+    psq_check_and_report_tool_version (VeraPP
+                                       "${CLANG_TIDY_VERSION}"
+                                       REQUIRED_VARS
+                                       VERAPP_EXECUTABLE
+                                       VERAPP_VERSION
+                                       VERAPP_TRANSFORMATIONS
+                                       VERAPP_RULES
+                                       VERAPP_PROFILES)
+
+    psq_print_if_not_quiet (VeraPP
+                            MSG "VeraPP version"
+                                "${VERAPP_VERSION} found at"
+                                "${VERAPP_EXECUTABLE}"
+                            DEPENDS VERAPP_EXECUTABLE
+                                    VERAPP_VERSION)
+
     set (VeraPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
-
-    if (NOT VeraPP_FOUND)
-
-        psq_report_tool_not_found (VeraPP "Vera++ was not found")
-
-    endif (NOT VeraPP_FOUND)
 
 endfunction (_find_verapp)
 

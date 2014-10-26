@@ -26,4 +26,4 @@ file (WRITE ${FILE_TO_MAKE} "")
 verapp_list_files_in_external_directory (RETURN_VALUE
                                          DIRECTORY ${DIRECTORY_WITH_FILE})
 
-assert_variable_is (${RETURN_VALUE} STRING EQUAL "${FILE_TO_MAKE}")
+assert_variable_is (RETURN_VALUE STRING EQUAL "${FILE_TO_MAKE}")
