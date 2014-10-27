@@ -15,8 +15,12 @@
 #
 # See LICENCE.md for Copyright info
 
+set (CMAKE_MODULE_PATH
+     ${CMAKE_CURRENT_LIST_DIR}/tooling-cmake-util
+     ${CMAKE_MODULE_PATH})
+
 include (CMakeParseArguments)
-include (${CMAKE_CURRENT_LIST_DIR}/tooling-cmake-util/PolysquareToolingUtil.cmake)
+include (PolysquareToolingUtil)
 
 macro (_validate_verapp CONTINUE)
 
@@ -208,6 +212,41 @@ function (verapp_import_default_profiles_into_subdirectory_on_target SUBDIR
                       ${_new_target})
 endfunction (verapp_import_default_profiles_into_subdirectory_on_target)
 
+function (_verapp_get_commandline_for_source SOURCE COMMANDLINE_RETURN)
+
+    set (GET_COMMANDLINE_FOR_SOURCE_OPTIONS WARN_ONLY)
+    set (GET_COMMANDLINE_FOR_SOURCE_SINGLEVAR_ARGS PROFILE)
+
+    cmake_parse_arguments (GET_COMMANDLINE_FOR_SOURCE
+                           "${GET_COMMANDLINE_FOR_SOURCE_OPTIONS}"
+                           "${GET_COMMANDLINE_FOR_SOURCE_SINGLEVAR_ARGS}"
+                           ""
+                           ${ARGN})
+
+    psq_assert_set (GET_COMMANDLINE_FOR_SOURCE_PROFILE
+                    "PROFILE must be set in the options for "
+                    "_verapp_get_commandline_list")
+
+    # WARN_ONLY mode just runs vera++ and lets it
+    # print to the stderr. It always returns success
+    # so the build will never fail. If WARN_ONLY
+    # is not set, then --error is passed and a nonzero
+    # exit code is always returned on failure.
+    psq_add_switch (FAILURE_MODE GET_COMMANDLINE_FOR_SOURCE_WARN_ONLY
+                    ON --warning
+                    OFF --error)
+
+    set (${COMMANDLINE_RETURN}
+         COMMAND ${VERAPP_EXECUTABLE}
+         ${SOURCE}
+         --profile
+         ${GET_COMMANDLINE_FOR_SOURCE_PROFILE}
+         --show-rule
+         ${FAILURE_MODE}
+         PARENT_SCOPE)
+
+endfunction ()
+
 # Returns a list of command lines to run, each command being separated by
 # the COMMAND operator, so that the entire list can be passed directly
 # to add_custom_command or add_custom_target
@@ -227,37 +266,24 @@ function (_verapp_get_commandline_list COMMANDLINES_RETURN)
                            "${GET_COMMANDLINE_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    psq_assert_set (GET_COMMANDLINE_PROFILE
-                    "PROFILE must be set in the options for "
-                    "_verapp_get_commandline_list")
     psq_assert_set (GET_COMMANDLINE_SOURCES
                     "SOURCES must be set in the options for "
                     "_verapp_get_commandline_list")
 
-    # WARN_ONLY mode just runs vera++ and lets it
-    # print to the stderr. It always returns success
-    # so the build will never fail. If WARN_ONLY
-    # is not set, then --error is passed and a nonzero
-    # exit code is always returned on failure.
-    psq_add_switch (_verapp_failure_mode GET_COMMANDLINE_WARN_ONLY
-                    ON --warning
-                    OFF --error)
 
     psq_handle_check_generated_option (GET_COMMANDLINE FILTERED_SOURCES
                                        SOURCES ${GET_COMMANDLINE_SOURCES})
 
-    set (COMMAND_LIST)
+    psq_forward_options (GET_COMMANDLINE GET_FOR_SOURCE_FORWARD
+                         OPTION_ARGS WARN_ONLY
+                         SINGLEVAR_ARGS PROFILE)
 
     foreach (SOURCE ${FILTERED_SOURCES})
 
-        list (APPEND COMMAND_LIST
-              COMMAND
-              ${VERAPP_EXECUTABLE}
-              ${SOURCE}
-              --profile
-              ${GET_COMMANDLINE_PROFILE}
-              --show-rule
-              ${_verapp_failure_mode})
+        _verapp_get_commandline_for_source (${SOURCE} COMMANDLINE
+                                            ${GET_FOR_SOURCE_FORWARD})
+
+        list (APPEND COMMAND_LIST ${COMMANDLINE})
 
     endforeach ()
 
@@ -292,30 +318,26 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY)
                            "${CHECK_CONFORMANCE_SINGLEVAR_ARGS}"
                            "${CHECK_CONFORMANCE_MULTIVAR_ARGS}"
                            ${ARGN})
-    psq_assert_set (CHECK_CONFORMANCE_TARGET "Must specify a TARGET to run checks on")
-    psq_assert_set (CHECK_CONFORMANCE_PROFILE "Must specify PROFILE to run checks with")
+    psq_assert_set (CHECK_CONFORMANCE_TARGET
+                    "Must specify a TARGET to run checks on")
+    psq_assert_set (CHECK_CONFORMANCE_PROFILE
+                    "Must specify PROFILE to run checks with")
 
     psq_forward_options (CHECK_CONFORMANCE GET_COMMANDLINE_FORWARD_OPTIONS
-                         OPTION_ARGS ${CHECK_CONFORMANCE_OPTIONS}
+                         OPTION_ARGS WARN_ONLY
                          SINGLEVAR_ARGS PROFILE)
-
-    psq_strip_add_custom_target_sources (FILTERED_SOURCES
-                                         ${CHECK_CONFORMANCE_TARGET})
-    _verapp_get_commandline_list (COMMAND_LIST
-                                  SOURCES ${FILTERED_SOURCES}
-                                  ${GET_COMMANDLINE_FORWARD_OPTIONS})
-
-    psq_get_target_command_attach_point (${CHECK_CONFORMANCE_TARGET} WHEN)
+    _verapp_get_commandline_for_source (@SOURCE@ COMMANDLINE_TEMPLATE
+                                        ${GET_COMMANDLINE_FORWARD_OPTIONS})
 
     # Ensure that the directory always exists.
     file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
 
-    # DEPENDS with a target name doesn't quite work on this situation
-    # so just add a dependency on the normal target.
-    add_custom_command (TARGET ${CHECK_CONFORMANCE_TARGET}
-                        ${WHEN}
-                        ${COMMAND_LIST}
-                        WORKING_DIRECTORY ${VERAPP_DIRECTORY})
+    psq_forward_options (CHECK_CONFORMANCE RUN_TOOL_FORWARD_OPTIONS
+                         OPTION_ARGS CHECK_GENERATED)
+    psq_run_tool_for_each_source (${CHECK_CONFORMANCE_TARGET} Vera++
+                                  COMMAND ${COMMANDLINE_TEMPLATE}
+                                  ${RUN_TOOL_FORWARD_OPTIONS}
+                                  WORKING_DIRECTORY ${VERAPP_DIRECTORY})
 
     if (CHECK_CONFORMANCE_DEPENDS)
         add_dependencies (${CHECK_CONFORMANCE_TARGET}
