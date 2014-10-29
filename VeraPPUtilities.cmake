@@ -333,15 +333,11 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY)
     file (MAKE_DIRECTORY ${VERAPP_DIRECTORY})
 
     psq_forward_options (CHECK_CONFORMANCE RUN_TOOL_FORWARD_OPTIONS
-                         OPTION_ARGS CHECK_GENERATED)
+                         OPTION_ARGS CHECK_GENERATED
+                         MULTIVAR_ARGS DEPENDS)
     psq_run_tool_for_each_source (${CHECK_CONFORMANCE_TARGET} vera++
                                   COMMAND ${COMMANDLINE_TEMPLATE}
                                   ${RUN_TOOL_FORWARD_OPTIONS}
                                   WORKING_DIRECTORY ${VERAPP_DIRECTORY})
-
-    if (CHECK_CONFORMANCE_DEPENDS)
-        add_dependencies (${CHECK_CONFORMANCE_TARGET}
-                          ${CHECK_CONFORMANCE_DEPENDS})
-    endif (CHECK_CONFORMANCE_DEPENDS)
 
 endfunction (verapp_profile_check_source_files_conformance)
