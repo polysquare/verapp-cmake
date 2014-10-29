@@ -334,7 +334,7 @@ function (verapp_profile_check_source_files_conformance VERAPP_DIRECTORY)
 
     psq_forward_options (CHECK_CONFORMANCE RUN_TOOL_FORWARD_OPTIONS
                          OPTION_ARGS CHECK_GENERATED)
-    psq_run_tool_for_each_source (${CHECK_CONFORMANCE_TARGET} Vera++
+    psq_run_tool_for_each_source (${CHECK_CONFORMANCE_TARGET} vera++
                                   COMMAND ${COMMANDLINE_TEMPLATE}
                                   ${RUN_TOOL_FORWARD_OPTIONS}
                                   WORKING_DIRECTORY ${VERAPP_DIRECTORY})
