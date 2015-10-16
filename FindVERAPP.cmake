@@ -1,4 +1,4 @@
-# FindVeraPP.cmake
+# /FindVERAPP.cmake
 #
 # This CMake script will search for vera++ and set the following
 # variables
@@ -14,18 +14,14 @@
 # VERAPP_SEARCH_PATHS : List of directories to search for vera++ in, before
 #                       searching any system paths. This should be the prefix
 #                       to which vera++ was installed, and not the path
-#                       that contains the vera++ binary. E.g. /opt/ not
+#                       that contains the vera++ binary. Eg /opt/ not
 #                       /opt/bin/
 #
-# See LICENCE.md for Copyright info
+# See /LICENCE.md for Copyright information
 
-set (CMAKE_MODULE_PATH
-     ${CMAKE_MODULE_PATH}
-     ${CMAKE_CURRENT_LIST_DIR}/tooling-find-package-cmake-util)
+include ("smspillaz/tooling-find-pkg-util/ToolingFindPackageUtil")
 
-include (ToolingFindPackageUtil)
-
-function (_find_verapp)
+function (verapp_find)
 
     # Set-up the directory tree of the vera++ installation
     set (BIN_SUBDIR bin)
@@ -46,27 +42,26 @@ function (_find_verapp)
 
     if (VERAPP_EXECUTABLE)
 
-        psq_find_tool_extract_version (${VERAPP_EXECUTABLE} VERAPP_VERSION
+        psq_find_tool_extract_version ("${VERAPP_EXECUTABLE}" VERAPP_VERSION
                                        VERSION_ARG --version
                                        VERSION_HEADER ""
                                        VERSION_END_TOKEN "\n")
-        psq_find_executable_installation_root (${VERAPP_EXECUTABLE}
+        psq_find_executable_installation_root ("${VERAPP_EXECUTABLE}"
                                                INSTALL_ROOT
                                                PREFIX_SUBDIRECTORY
                                                ${BIN_SUBDIR})
 
-        set (LIB_SUBDIR lib/vera++)
-        set (SCRIPTS_SUBDIR scripts)
+        set (LIB_SUBDIR "lib/vera++")
         set (SCRIPTS_SUBDIR_LOC ${LIB_SUBDIR})
         set (RULES_SUBDIR rules)
         set (RULES_SUBDIR_LOC
-             ${INSTALL_ROOT}/${SCRIPTS_SUBDIR_LOC}/${SCRIPTS_SUBDIR}/)
+             "${INSTALL_ROOT}/${SCRIPTS_SUBDIR_LOC}/")
         set (TRANSFORMATIONS_SUBDIR transformations)
         set (TRANSFORMATIONS_SUBDIR_LOC
-             ${INSTALL_ROOT}/${SCRIPTS_SUBDIR_LOC}/${SCRIPTS_SUBDIR}/)
+             "${INSTALL_ROOT}/${SCRIPTS_SUBDIR_LOC}/")
         set (PROFILES_SUBDIR profiles)
         set (PROFILES_SUBDIR_LOC
-             ${INSTALL_ROOT}/${LIB_SUBDIR}/)
+             "${INSTALL_ROOT}/${LIB_SUBDIR}/")
 
         # Find the other parts of the Vera++ installation
         psq_find_path_in_installation_root (${TRANSFORMATIONS_SUBDIR_LOC}
@@ -90,7 +85,7 @@ function (_find_verapp)
                                            "Path to vera++ profiles was not "
                                            "found in ${INSTALL_ROOT}")
 
-    endif (VERAPP_EXECUTABLE)
+    endif ()
 
     psq_check_and_report_tool_version (VeraPP
                                        "${VERAPP_VERSION}"
@@ -101,8 +96,8 @@ function (_find_verapp)
                                        VERAPP_RULES
                                        VERAPP_PROFILES)
 
-    set (VeraPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
+    set (VERAPP_FOUND ${VeraPP_FOUND} PARENT_SCOPE)
 
-endfunction (_find_verapp)
+endfunction ()
 
-_find_verapp ()
+verapp_find ()
