@@ -7,10 +7,15 @@
 include (CMakeParseArguments)
 include ("smspillaz/tooling-cmake-util/PolysquareToolingUtil")
 
+set (_VERAPP_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 macro (verapp_validate CONTINUE)
 
     if (NOT DEFINED VERAPP_FOUND)
 
+        set (CMAKE_MODULE_PATH
+             ${CMAKE_MODULE_PATH} # NOLINT:correctness/quotes
+             "${_VERAPP_LIST_DIR}")
         find_package (VERAPP ${ARGN})
 
     endif ()
