@@ -24,6 +24,12 @@ macro (verapp_validate CONTINUE)
 
 endmacro ()
 
+if (POLICY CMP0053)
+
+    cmake_policy (SET CMP0053 NEW)
+
+endif ()
+
 # verapp_list_files_in_external_directory
 #
 # Searches any external directory path, relative or absolute for
