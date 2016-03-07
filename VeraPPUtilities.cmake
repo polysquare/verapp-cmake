@@ -5,7 +5,7 @@
 # See /LICENCE.md for Copyright information
 
 include (CMakeParseArguments)
-include ("smspillaz/tooling-cmake-util/PolysquareToolingUtil")
+include ("cmake/tooling-cmake-util/PolysquareToolingUtil")
 
 set (_VERAPP_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
