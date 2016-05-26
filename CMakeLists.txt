@@ -14,8 +14,7 @@ cmake_minimum_required (VERSION 2.8)
 
 set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
-include ("cmake/cmake-unit/CMakeUnitRunner")
-include ("cmake/cmake-unit/CMakeUnit")
+include ("cmake/cmake-module-common/Common" OPTIONAL)
 include (VeraPPUtilities)
 
 
@@ -762,13 +761,18 @@ function (verapp_test_list_files_in_external_directory_matching)
 
 endfunction ()
 
-if (BIICODE)
+set (CMAKE_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/VeraPPUtilities.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/FindVERAPP.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+set (MARKDOWN_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/LICENCE.md"
+     "${CMAKE_CURRENT_LIST_DIR}/README.md")
 
-    add_bii_targets ()
+if (COMMAND cmake_module_add_common_targets)
+
+    cmake_module_add_common_targets (NAMESPACE "verapp"
+                                     CMAKE_FILES ${CMAKE_FILES}
+                                     DOCUMENTATION_FILES ${MARKDOWN_FILES})
 
 endif ()
-
-cmake_unit_init (NAMESPACE verapp
-                 COVERAGE_FILES
-                 "${CMAKE_CURRENT_LIST_DIR}/VeraPPUtilities.cmake"
-                 "${CMAKE_CURRENT_LIST_DIR}/FindVERAPP.cmake")
